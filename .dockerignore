@@ -1,0 +1,63 @@
+# Version control
+.git
+
+# Environment and tool state
+.env
+.env.*
+.envrc
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+.python-version
+.pdm-python
+.pdm-build/
+.pixi
+
+# Python caches and build artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+build/
+dist/
+wheels/
+downloads/
+sdist/
+.cache
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.pytype/
+.nox/
+.tox/
+htmlcov/
+.coverage
+.coverage.*
+cython_debug/
+
+# Editor and IDE
+.idea/
+.vscode/
+.ropeproject
+.spyderproject
+.spyproject
+.cursorignore
+.cursorindexingignore
+
+# Data and runtime files
+*.log
+celerybeat-schedule
+celerybeat.pid
+db.sqlite3
+db.sqlite3-journal
+
+# Not needed in runtime image
+tests/
+docs/_build/
+.ipynb_checkpoints
+postgres_data/
+redis_data/

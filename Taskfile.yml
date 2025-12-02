@@ -1,0 +1,44 @@
+version: '3'
+
+tasks:
+  default:
+    desc: Run format and tests
+    cmds:
+      - task: format
+      - task: test
+
+  format:
+    desc: Format code
+    cmds:
+      - ruff format
+
+  test:
+    desc: Run tests
+    cmds:
+      - pytest
+
+  migrate:new:
+    desc: Create a new Alembic migration with autogeneration
+    cmds:
+      - docker compose run --rm develop alembic revision --autogenerate -m "{{.MSG}}"
+
+  migrate:upgrade:
+    desc: Apply latest Alembic migrations
+    cmds:
+      - docker compose run --rm develop alembic upgrade head
+
+  migrate:downgrade:
+    desc: Revert the last Alembic migration
+    cmds:
+      - docker compose run --rm develop alembic downgrade "-1"
+
+  docker:build:
+    desc: Build Docker image for FastAPI services
+    cmds:
+      - docker compose build fastapi
+
+  docker:up:
+    desc: Run full stack with Docker Compose
+    cmds:
+      - docker compose up
+      - docker compose down --remove-orphans
