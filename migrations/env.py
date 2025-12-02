@@ -17,11 +17,11 @@ from database import Base
 # access to the values within the .ini file in use.
 config = context.config
 section = config.config_ini_section
-config.set_section_option(section, "DB_HOST", settings.db.host)
-config.set_section_option(section, "DB_PORT", settings.db.port)
-config.set_section_option(section, "DB_USER", settings.db.user)
-config.set_section_option(section, "DB_NAME", settings.db.db_name)
-config.set_section_option(section, "DB_PASS", settings.db.password)
+config.set_section_option(section, "DB__HOST", settings.db.host)
+config.set_section_option(section, "DB__PORT", settings.db.port)
+config.set_section_option(section, "DB__USER", settings.db.user)
+config.set_section_option(section, "DB__DB_NAME", settings.db.db_name)
+config.set_section_option(section, "DB__PASSWORD", settings.db.password)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.

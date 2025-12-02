@@ -17,28 +17,27 @@ tasks:
     cmds:
       - pytest
 
-  migrate:new:
+  m:new:
     desc: Create a new Alembic migration with autogeneration
     cmds:
       - docker compose run --rm develop alembic revision --autogenerate -m "{{.MSG}}"
 
-  migrate:upgrade:
+  m:upgrade:
     desc: Apply latest Alembic migrations
     cmds:
       - docker compose run --rm develop alembic upgrade head
 
-  migrate:downgrade:
+  m:downgrade:
     desc: Revert the last Alembic migration
     cmds:
       - docker compose run --rm develop alembic downgrade "-1"
 
-  docker:build:
+  d:build:
     desc: Build Docker image for FastAPI services
     cmds:
       - docker compose build fastapi
 
-  docker:up:
+  d:up:
     desc: Run full stack with Docker Compose
     cmds:
-      - docker compose up
-      - docker compose down --remove-orphans
+      - docker compose up -d --remove-orphans
