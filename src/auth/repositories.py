@@ -1,4 +1,5 @@
 from typing import Sequence
+from uuid import UUID
 
 from auth import orm
 from auth.models import UserInDBDTO, UserInfoDTO
@@ -17,3 +18,6 @@ class UserRepository(SQLAlchemyRepository):
     async def add(self, **insert_data) -> UserInfoDTO:
         created_user = await super().add(**insert_data)
         return UserInfoDTO.model_validate(created_user)
+
+    async def verify_user(self, user_id: UUID) -> None:
+        await self.update({"id": user_id}, is_verified=True)

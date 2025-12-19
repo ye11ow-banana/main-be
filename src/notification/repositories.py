@@ -1,4 +1,5 @@
 from typing import Sequence
+from uuid import UUID
 
 from sqlalchemy.dialects.postgresql import insert
 
@@ -16,7 +17,7 @@ class VerificationCodeRepository(SQLAlchemyRepository):
     model = orm.VerificationCode
 
     async def get(
-        self, /, returns: Sequence[str] | None = None, **data: str | int
+        self, /, returns: Sequence[str] | None = None, **data: str | int | UUID
     ) -> VerificationCodeInDBDTO:
         code = await super().get(returns=returns, **data)
         return VerificationCodeInDBDTO.model_validate(code)
@@ -36,3 +37,7 @@ class VerificationCodeRepository(SQLAlchemyRepository):
             )
         )
         await self._session.execute(stmt)
+
+    async def get_by_user_id(self, user_id: UUID) -> VerificationCodeDTO | None:
+        code = await self.get(user_id=user_id)
+        return VerificationCodeDTO.model_validate(code)

@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
@@ -16,6 +16,9 @@ class VerificationCodeDTO(MergeVerificationCode):
     code: int
     expired_at: datetime
     user_id: UUID
+
+    def is_expired(self) -> bool:
+        return datetime.now(timezone.utc) >= self.expired_at
 
 
 class VerificationCodeInDBDTO(BaseModel):

@@ -1,8 +1,18 @@
 from dependency_injector.wiring import inject
 from fastapi import APIRouter, HTTPException, status
 
-from auth.exceptions import AuthenticationException, RegistrationException
-from auth.models import TokenDTO, UserInCreateDTO, UserInfoDTO, UserInLoginDTO
+from auth.exceptions import (
+    AuthenticationException,
+    RegistrationException,
+    WrongEmailVerificationCodeException,
+)
+from auth.models import (
+    TokenDTO,
+    UserInCreateDTO,
+    UserInfoDTO,
+    UserInLoginDTO,
+    UserVerificationCodeDTO,
+)
 from config.dependencies import (
     JWTAuthenticationDep,
     AuthenticatedUserDep,
@@ -52,7 +62,7 @@ async def sign_up(
     return ResponseDTO[UserInfoDTO](data=new_user)
 
 
-@router.post("/send-email-verification-code", status_code=status.HTTP_200_OK)
+@router.post("/email/verification-code", status_code=status.HTTP_200_OK)
 @inject
 async def send_email_verification_code(
     user: AuthenticatedUserDep,
@@ -65,5 +75,23 @@ async def send_email_verification_code(
     try:
         await notification_service.send_verification_code(user)
     except RegistrationException as e:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail=str(e))
+    return ResponseDTO[SuccessDTO](data=SuccessDTO())
+
+
+@router.post("/email/verify")
+@inject
+async def verify_email(
+    code: UserVerificationCodeDTO,
+    user: AuthenticatedUserDep,
+    registration_service: RegistrationDep,
+) -> ResponseDTO[SuccessDTO]:
+    if user.is_verified:
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST, detail="User is already verified"
+        )
+    try:
+        await registration_service.apply_code(code.code, user.id)
+    except WrongEmailVerificationCodeException as e:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, detail=str(e))
     return ResponseDTO[SuccessDTO](data=SuccessDTO())

@@ -62,3 +62,7 @@ class UserInCreateDTO(BaseModel):
 
 class UserIdDTO(BaseModel):
     id: UUID
+
+
+class UserVerificationCodeDTO(BaseModel):
+    code: int
