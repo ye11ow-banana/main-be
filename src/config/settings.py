@@ -15,11 +15,22 @@ class JWTSettings(BaseModel):
     algorithm: str = "HS256"
 
 
+class EmailSettings(BaseModel):
+    smtp_username: str = ""
+    smtp_password: str = ""
+    smtp_from: str = "no-reply@example.com"
+    smtp_port: int = 1025
+    smtp_server: str = "mailpit"
+    smtp_starttls: bool = False
+    smtp_ssl_tls: bool = False
+
+
 class Settings(BaseSettings):
     secret_key: str = "secret"
 
     db: PostgresDBSettings = PostgresDBSettings()
     jwt: JWTSettings = JWTSettings()
+    email: EmailSettings = EmailSettings()
 
     model_config = SettingsConfigDict(
         env_file=".env",

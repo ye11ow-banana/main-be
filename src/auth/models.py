@@ -22,6 +22,7 @@ class UserInfoDTO(BaseModel):
     id: UUID
     username: str
     email: str
+    is_verified: bool
     created_at: datetime
 
 
@@ -32,6 +33,7 @@ class UserInDBDTO(BaseModel):
     username: str | None = None
     email: str | None = None
     created_at: datetime | None = None
+    is_verified: bool | None = None
     hashed_password: str | None = None
 
     def to_user_info(self) -> UserInfoDTO:

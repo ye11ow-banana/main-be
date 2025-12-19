@@ -1,19 +1,50 @@
 from typing import Annotated
-
-from dependency_injector.wiring import Provide
-from fastapi import Depends
-
+from fastapi import HTTPException, status, Request, Depends
+from fastapi.security.utils import get_authorization_scheme_param
+from dependency_injector.wiring import Provide, inject
+from auth.exceptions import AuthenticationException
 from auth.models import UserInfoDTO
 from auth.services.authentication import JWTAuthenticationService
 from auth.services.registration import RegistrationService
 from config.containers import Container
+from notification.services.email import EmailNotificationService
 
 JWTAuthenticationDep = Annotated[
     JWTAuthenticationService, Depends(Provide[Container.jwt_authentication_service])
 ]
-AuthenticatedUserDep = Annotated[
-    UserInfoDTO, Depends(Provide[Container.authenticated_user])
-]
 RegistrationDep = Annotated[
     RegistrationService, Depends(Provide[Container.registration_service])
 ]
+EmailNotificationDep = Annotated[
+    EmailNotificationService, Depends(Provide[Container.notification_service])
+]
+
+
+async def use_token(request: Request) -> str:
+    authorization = request.headers.get("Authorization")
+    scheme, token = get_authorization_scheme_param(authorization)
+    if not authorization or scheme.lower() != "bearer":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    return token
+
+
+@inject
+async def get_authenticated_user(
+    jwt_auth_service: JWTAuthenticationDep, token: str = Depends(use_token)
+) -> UserInfoDTO:
+    try:
+        user = await jwt_auth_service.get_current_user(token)
+    except AuthenticationException:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    return user
+
+
+AuthenticatedUserDep = Annotated[UserInfoDTO, Depends(get_authenticated_user)]

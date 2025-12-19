@@ -1,10 +1,12 @@
+import sys
+
 from fastapi import FastAPI, Request, status
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import HTTPException, RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from auth.router import router as router_auth
+import auth.router as auth_router_module
 from models import (
     ErrorResponseDTO,
     MessageErrorResponseDTO,
@@ -22,7 +24,13 @@ app = FastAPI(
 )
 
 container = Container()
-container.wire(modules=[__name__])
+container.wire(
+    modules=[
+        sys.modules[__name__],
+        auth_router_module,
+        "config.dependencies",
+    ]
+)
 app.container = container
 
 ORIGINS = {"*"}
@@ -53,4 +61,4 @@ async def validation_exception_handler(_: Request, exc: HTTPException):
     )
 
 
-app.include_router(router_auth)
+app.include_router(auth_router_module.router)

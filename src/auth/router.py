@@ -7,15 +7,16 @@ from config.dependencies import (
     JWTAuthenticationDep,
     AuthenticatedUserDep,
     RegistrationDep,
+    EmailNotificationDep,
 )
-from models import ResponseDTO
+from models import ResponseDTO, SuccessDTO
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
 
-@router.post("/login")
+@router.post("/sign-in")
 @inject
-async def login(
+async def sign_in(
     user: UserInLoginDTO,
     jwt_auth_service: JWTAuthenticationDep,
 ) -> ResponseDTO[TokenDTO]:
@@ -30,7 +31,7 @@ async def login(
     return ResponseDTO[TokenDTO](data=token)
 
 
-@router.get("/users/me")
+@router.get("/me")
 @inject
 async def get_current_user(
     user: AuthenticatedUserDep,
@@ -38,9 +39,9 @@ async def get_current_user(
     return ResponseDTO[UserInfoDTO](data=user)
 
 
-@router.post("/registration", status_code=status.HTTP_201_CREATED)
+@router.post("/sign-up", status_code=status.HTTP_201_CREATED)
 @inject
-async def register_user(
+async def sign_up(
     user: UserInCreateDTO,
     registration_service: RegistrationDep,
 ) -> ResponseDTO[UserInfoDTO]:
@@ -49,3 +50,20 @@ async def register_user(
     except RegistrationException as e:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, detail=str(e))
     return ResponseDTO[UserInfoDTO](data=new_user)
+
+
+@router.post("/send-email-verification-code", status_code=status.HTTP_200_OK)
+@inject
+async def send_email_verification_code(
+    user: AuthenticatedUserDep,
+    notification_service: EmailNotificationDep,
+) -> ResponseDTO[SuccessDTO]:
+    if user.is_verified:
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST, detail="User is already verified"
+        )
+    try:
+        await notification_service.send_verification_code(user)
+    except RegistrationException as e:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail=str(e))
+    return ResponseDTO[SuccessDTO](data=SuccessDTO())

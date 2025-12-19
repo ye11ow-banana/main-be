@@ -8,17 +8,17 @@ from unitofwork import IUnitOfWork
 
 class RegistrationService:
     def __init__(self, uow: IUnitOfWork):
-        self._uof: IUnitOfWork = uow
-        self._pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+        self._uow: IUnitOfWork = uow
+        self._pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 
     async def register_user(self, user: UserInCreateDTO) -> UserInfoDTO:
         hashed_password = await self._hash_password(user.password)
         try:
-            async with self._uof:
+            async with self._uow:
                 new_user = await self._create_user(
                     user.username, str(user.email), hashed_password
                 )
-                await self._uof.commit()
+                await self._uow.commit()
         except IntegrityError:
             raise RegistrationException(
                 "User with this username or email already exists"
@@ -28,7 +28,7 @@ class RegistrationService:
     async def _create_user(
         self, username: str, email: str, password: str
     ) -> UserInfoDTO:
-        return await self._uof.users.add(
+        return await self._uow.users.add(
             username=username, email=email, hashed_password=password
         )
 

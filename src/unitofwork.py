@@ -4,10 +4,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import sessionmaker
 
 from auth.repositories import UserRepository
+from notification.repositories import VerificationCodeRepository
 
 
 class IUnitOfWork(ABC):
     users: UserRepository
+    verification_codes: VerificationCodeRepository
 
     @abstractmethod
     def __init__(self):
@@ -37,6 +39,7 @@ class UnitOfWork(IUnitOfWork):
     async def __aenter__(self):
         self._session = self.session_factory()
         self.users = UserRepository(self._session)
+        self.verification_codes = VerificationCodeRepository(self._session)
 
     async def __aexit__(self, *args):
         await self.rollback()

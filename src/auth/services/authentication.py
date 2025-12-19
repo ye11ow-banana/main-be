@@ -15,7 +15,7 @@ from unitofwork import IUnitOfWork
 class IAuthenticationService(ABC):
     def __init__(self, uow: IUnitOfWork):
         self._uow: IUnitOfWork = uow
-        self._pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+        self._pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 
     @abstractmethod
     async def authenticate_user(self, data: UserInLoginDTO):

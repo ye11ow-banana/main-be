@@ -22,6 +22,7 @@ RUN uv pip install --system "uvicorn[standard]>=0.30,<0.31"
 COPY alembic.ini config.toml ./ 
 COPY migrations ./migrations
 COPY src ./src
+COPY templates ./templates
 
 EXPOSE 8000
 

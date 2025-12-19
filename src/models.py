@@ -5,6 +5,10 @@ from pydantic import BaseModel
 S = TypeVar("S", bound=BaseModel)
 
 
+class SuccessDTO(BaseModel):
+    success: bool = True
+
+
 class ResponseDTO(BaseModel, Generic[S]):
     data: S | list[S]
 

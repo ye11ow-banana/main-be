@@ -41,3 +41,8 @@ tasks:
     desc: Run full stack with Docker Compose
     cmds:
       - docker compose up -d --remove-orphans
+
+  d:watch:
+    desc: Sync code changes into container with Compose Watch (no rebuilds for code)
+    cmds:
+      - docker compose watch

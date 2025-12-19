@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Your verification code – ServiceHub</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    /* Basic reset */
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #F3F4F6;
+    }
+
+    table {
+      border-spacing: 0;
+      border-collapse: collapse;
+    }
+
+    img {
+      border: 0;
+      line-height: 100%;
+      outline: none;
+      text-decoration: none;
+    }
+
+    .email-container {
+      max-width: 600px;
+      width: 100%;
+      margin: 0 auto;
+      background-color: #FFFFFF;
+      border-radius: 16px;
+      border: 1px solid #E5E7EB;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui,
+        sans-serif;
+      color: #111827;
+    }
+
+    .email-inner {
+      padding: 28px 24px 24px;
+    }
+
+    /* Header */
+    .email-header {
+      width: 100%;
+      margin-bottom: 24px;
+    }
+
+    .logo-row {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .logo-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      background-color: #2563EB;
+      display: inline-block;
+    }
+
+    .logo-text {
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+      color: #111827;
+    }
+
+    /* Title + text */
+    .email-title {
+      font-size: 22px;
+      font-weight: 600;
+      margin: 0 0 8px;
+    }
+
+    .email-subtitle {
+      font-size: 14px;
+      color: #4B5563;
+      margin: 0 0 20px;
+      line-height: 1.5;
+    }
+
+    .email-body-text {
+      font-size: 14px;
+      color: #374151;
+      line-height: 1.6;
+      margin: 0 0 20px;
+    }
+
+    /* CODE BOX */
+    .code-wrapper {
+      margin: 0 0 20px;
+    }
+
+    .code-label {
+      font-size: 12px;
+      font-weight: 500;
+      color: #6B7280;
+      margin: 0 0 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .code-box {
+      display: inline-block;
+      padding: 12px 20px;
+      border-radius: 999px;
+      background-color: #F9FAFB;
+      border: 1px solid #E5E7EB;
+      font-size: 20px;
+      font-weight: 600;
+      letter-spacing: 0.35em;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+        "Liberation Mono", "Courier New", monospace;
+      color: #111827;
+    }
+
+    /* Meta / info */
+    .email-meta {
+      margin-top: 16px;
+      font-size: 12px;
+      color: #6B7280;
+      line-height: 1.5;
+    }
+
+    .email-meta small {
+      display: block;
+      margin-top: 4px;
+      color: #9CA3AF;
+    }
+
+    .email-footer {
+      text-align: center;
+      font-size: 12px;
+      color: #9CA3AF;
+      margin-top: 18px;
+      padding-top: 12px;
+      border-top: 1px solid #E5E7EB;
+    }
+
+    /* Mobile */
+    @media screen and (max-width: 600px) {
+      .email-inner {
+        padding: 20px 16px 18px;
+      }
+
+      .email-title {
+        font-size: 20px;
+      }
+
+      .code-box {
+        font-size: 18px;
+        padding: 10px 16px;
+        letter-spacing: 0.3em;
+      }
+    }
+  </style>
+</head>
+
+<!-- INLINE padding here is what gives visible top margin in most email clients -->
+<body style="margin:0; padding:40px 0 24px; background-color:#F3F4F6;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+    <tr>
+      <td align="center">
+        <table class="email-container" role="presentation" width="100%">
+          <tr>
+            <td class="email-inner">
+              <!-- Header -->
+              <table class="email-header" role="presentation" width="100%">
+                <tr>
+                  <td>
+                    <div class="logo-row">
+                      <span class="logo-icon"></span>
+                      <span class="logo-text">ServiceHub</span>
+                    </div>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Content -->
+              <h1 class="email-title">Your verification code</h1>
+              <p class="email-subtitle">
+                Use the code below to confirm your email address and finish setting up your account.
+              </p>
+
+              <p class="email-body-text">
+                Hi {{username}},<br />
+                Enter this code in the ServiceHub app to verify that
+                <strong>{{email}}</strong> belongs to you.
+              </p>
+
+              <!-- CODE -->
+              <div class="code-wrapper">
+                <p class="code-label">Verification code</p>
+                <div class="code-box">
+                  {{verification_code}}
+                </div>
+              </div>
+
+              <div class="email-meta">
+                This code will expire in 10 minutes. If you didn’t try to sign in
+                or create a ServiceHub account, you can safely ignore this email.
+                <small>
+                  Need help? Contact our support at
+                  <a href="mailto:support@servicehub.example" style="color:#2563EB; text-decoration:none;">
+                    support@servicehub.example
+                  </a>.
+                </small>
+              </div>
+
+              <div class="email-footer">
+                © {{year}} ServiceHub. All rights reserved.
+              </div>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
