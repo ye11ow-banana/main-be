@@ -1,3 +1,4 @@
+from datetime import datetime
 from pathlib import Path
 
 from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
@@ -32,7 +33,7 @@ class EmailNotificationService(INotificationService):
                 "username": user.username,
                 "email": user.email,
                 "verification_code": code,
-                "year": 2025,
+                "year": datetime.now().year,
             },
             subtype=MessageType.html,
         )

@@ -89,9 +89,10 @@
       margin: 0 0 20px;
     }
 
-    /* CODE BOX */
+    /* CODE BLOCK – FULL WIDTH */
     .code-wrapper {
       margin: 0 0 20px;
+      width: 100%;
     }
 
     .code-label {
@@ -104,9 +105,9 @@
     }
 
     .code-box {
-      display: inline-block;
-      padding: 12px 20px;
-      border-radius: 999px;
+      width: 100%;
+      padding: 14px 16px;
+      border-radius: 12px;
       background-color: #F9FAFB;
       border: 1px solid #E5E7EB;
       font-size: 20px;
@@ -115,6 +116,8 @@
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
         "Liberation Mono", "Courier New", monospace;
       color: #111827;
+      text-align: center;
+      box-sizing: border-box;
     }
 
     /* Meta / info */
@@ -152,14 +155,14 @@
 
       .code-box {
         font-size: 18px;
-        padding: 10px 16px;
+        padding: 12px 12px;
         letter-spacing: 0.3em;
       }
     }
   </style>
 </head>
 
-<!-- INLINE padding here is what gives visible top margin in most email clients -->
+<!-- inline padding -> visual top margin in email clients -->
 <body style="margin:0; padding:40px 0 24px; background-color:#F3F4F6;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
     <tr>
@@ -186,12 +189,12 @@
               </p>
 
               <p class="email-body-text">
-                Hi {{username}},<br />
+                Hi {{first_name}},<br />
                 Enter this code in the ServiceHub app to verify that
                 <strong>{{email}}</strong> belongs to you.
               </p>
 
-              <!-- CODE -->
+              <!-- CODE FULL WIDTH -->
               <div class="code-wrapper">
                 <p class="code-label">Verification code</p>
                 <div class="code-box">
