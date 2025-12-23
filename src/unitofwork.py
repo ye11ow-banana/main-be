@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import sessionmaker
 
+from app.repositories import AppRepository
 from auth.repositories import UserRepository
 from notification.repositories import VerificationCodeRepository
 
@@ -10,6 +11,7 @@ from notification.repositories import VerificationCodeRepository
 class IUnitOfWork(ABC):
     users: UserRepository
     verification_codes: VerificationCodeRepository
+    apps: AppRepository
 
     @abstractmethod
     def __init__(self):
@@ -40,6 +42,7 @@ class UnitOfWork(IUnitOfWork):
         self._session = self.session_factory()
         self.users = UserRepository(self._session)
         self.verification_codes = VerificationCodeRepository(self._session)
+        self.apps = AppRepository(self._session)
 
     async def __aexit__(self, *args):
         await self.rollback()

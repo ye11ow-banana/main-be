@@ -35,15 +35,15 @@ class IAuthenticationService(ABC):
         if not is_password_verified:
             raise ValueError("Incorrect password")
 
-    async def _get_db_user_by_username(self, username: str, **kwargs) -> UserInDBDTO:
-        return await self._uow.users.get(username=username, **kwargs)
+    async def _get_db_user_by_username_or_email(self, username: str) -> UserInDBDTO:
+        return await self._uow.users.get_by_username_or_email(username)
 
 
 class JWTAuthenticationService(IAuthenticationService):
     async def authenticate_user(self, user: UserInLoginDTO) -> TokenDTO:
         try:
             async with self._uow:
-                db_user = await self._get_db_user_by_username(user.username)
+                db_user = await self._get_db_user_by_username_or_email(user.username)
             await self._verify_password(user.password, db_user.hashed_password)
         except (NoResultFound, ValueError):
             raise AuthenticationException("Incorrect username or password")
@@ -84,7 +84,7 @@ class JWTAuthenticationService(IAuthenticationService):
         if username is None:
             raise JWTError
         try:
-            db_user = await self._get_db_user_by_username(username, **kwargs)
+            db_user = await self._get_db_user_by_username_or_email(username, **kwargs)
         except NoResultFound:
             raise JWTError
         return db_user

@@ -3,6 +3,7 @@ from sqlalchemy import NullPool
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, AsyncEngine
 from sqlalchemy.orm import sessionmaker
 
+from app.services import AppService
 from auth.services.authentication import JWTAuthenticationService
 from auth.services.registration import RegistrationService
 from config import settings
@@ -35,4 +36,5 @@ class Container(containers.DeclarativeContainer):
     uow = providers.Factory(UnitOfWork, async_session_maker=async_session_maker)
     jwt_authentication_service = providers.Factory(JWTAuthenticationService, uow=uow)
     registration_service = providers.Factory(RegistrationService, uow=uow)
-    notification_service = providers.Singleton(EmailNotificationService, uow=uow)
+    notification_service = providers.Factory(EmailNotificationService, uow=uow)
+    app_service = providers.Singleton(AppService, uow=uow)

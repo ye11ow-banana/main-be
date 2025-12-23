@@ -1,6 +1,8 @@
 from typing import Sequence
 from uuid import UUID
 
+from sqlalchemy import select, or_
+
 from auth import orm
 from auth.models import UserInDBDTO, UserInfoDTO
 from repository import SQLAlchemyRepository
@@ -21,3 +23,15 @@ class UserRepository(SQLAlchemyRepository):
 
     async def verify_user(self, user_id: UUID) -> None:
         await self.update({"id": user_id}, is_verified=True)
+
+    async def get_by_username_or_email(
+        self, username_or_email: str
+    ) -> UserInDBDTO | None:
+        stmt = select(self.model).where(
+            or_(
+                self.model.username == username_or_email,
+                self.model.email == username_or_email,
+            )
+        )
+        user = (await self._session.execute(stmt)).scalar_one_or_none()
+        return UserInDBDTO.model_validate(user)

@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Sequence, Type
+from typing import Sequence, Type, Mapping, Any
 from uuid import UUID
 
 from sqlalchemy import Row, delete, func, select, update
@@ -115,12 +115,12 @@ class SQLAlchemyRepository(IRepository):
 
     async def get_all(
         self, /, returns: Sequence[str] | None = None, **data: str | int | UUID
-    ) -> Sequence[Row]:
+    ) -> Sequence[Mapping[str, Any]]:
         if returns is None:
             returns = [c.name for c in self.model.__table__.columns]
         query = select(*[getattr(self.model, c) for c in returns]).filter_by(**data)
         res = await self._session.execute(query)
-        return res.fetchall()
+        return res.mappings().all()
 
     async def count(self, /, **data: str | int | UUID) -> int:
         query = select(func.count()).filter_by(**data)
