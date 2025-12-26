@@ -9,6 +9,7 @@ from database import Base, created_at, uuidpk
 
 if TYPE_CHECKING:
     from notification.orm import VerificationCode
+    from calorie.orm import Day
 
 
 class User(Base):
@@ -24,3 +25,4 @@ class User(Base):
     verification_code: Mapped["VerificationCode"] = relationship(
         "VerificationCode", back_populates="user"
     )
+    days: Mapped[list["Day"]] = relationship("Day", back_populates="user")

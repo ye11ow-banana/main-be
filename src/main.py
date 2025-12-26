@@ -8,6 +8,7 @@ from fastapi.responses import JSONResponse
 
 import auth.router as auth_router_module
 import app.router as app_router_module
+import calorie.router as calorie_router_module
 from models import (
     ErrorResponseDTO,
     MessageErrorResponseDTO,
@@ -30,6 +31,7 @@ container.wire(
         sys.modules[__name__],
         auth_router_module,
         app_router_module,
+        calorie_router_module,
         "config.dependencies",
     ]
 )
@@ -65,3 +67,4 @@ async def validation_exception_handler(_: Request, exc: HTTPException):
 
 app.include_router(auth_router_module.router)
 app.include_router(app_router_module.router)
+app.include_router(calorie_router_module.router)
