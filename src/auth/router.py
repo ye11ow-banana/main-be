@@ -12,6 +12,7 @@ from auth.models import (
     UserInfoDTO,
     UserInLoginDTO,
     UserVerificationCodeDTO,
+    RefreshTokenDTO,
 )
 from config.dependencies import (
     JWTAuthenticationDep,
@@ -32,6 +33,22 @@ async def sign_in(
 ) -> ResponseDTO[TokenDTO]:
     try:
         token = await jwt_auth_service.authenticate_user(user)
+    except AuthenticationException:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    return ResponseDTO[TokenDTO](data=token)
+
+
+@router.post("/refresh-token")
+@inject
+async def refresh_token(
+    token: RefreshTokenDTO, jwt_auth_service: JWTAuthenticationDep
+) -> ResponseDTO[TokenDTO]:
+    try:
+        token = await jwt_auth_service.refresh_access_token(token.refresh_token)
     except AuthenticationException:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

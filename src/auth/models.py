@@ -8,6 +8,7 @@ from pydantic_core.core_schema import ValidationInfo
 
 class TokenDTO(BaseModel):
     access_token: str
+    refresh_token: str
     token_type: str
 
 
@@ -66,3 +67,7 @@ class UserIdDTO(BaseModel):
 
 class UserVerificationCodeDTO(BaseModel):
     code: int
+
+
+class RefreshTokenDTO(BaseModel):
+    refresh_token: str

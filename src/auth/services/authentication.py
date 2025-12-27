@@ -53,7 +53,14 @@ class JWTAuthenticationService(IAuthenticationService):
         access_token = await self.create_access_token(
             data={"sub": user.username}, expires_delta=access_token_expires
         )
-        return TokenDTO(access_token=access_token, token_type="bearer")
+        refresh_token_expires = timedelta(days=settings.jwt.refresh_token_expire_days)
+        refresh_token = await self.create_access_token(
+            data={"sub": user.username, "token_type": "refresh"},
+            expires_delta=refresh_token_expires,
+        )
+        return TokenDTO(
+            access_token=access_token, refresh_token=refresh_token, token_type="bearer"
+        )
 
     async def get_current_user(self, token: str) -> UserInfoDTO:
         try:
@@ -76,15 +83,36 @@ class JWTAuthenticationService(IAuthenticationService):
         )
         return str(encoded_jwt)
 
-    async def _get_db_user_by_jwt(self, token: str, **kwargs) -> UserInDBDTO:
+    async def refresh_access_token(self, refresh_token: str) -> TokenDTO:
+        try:
+            username = self._decore_jwt(refresh_token, is_refresh=True)
+        except JWTError:
+            raise AuthenticationException("Could not validate credentials")
+        access_token_expires = timedelta(
+            minutes=settings.jwt.access_token_expire_minutes
+        )
+        access_token = await self.create_access_token(
+            data={"sub": username}, expires_delta=access_token_expires
+        )
+        return TokenDTO(
+            access_token=access_token, refresh_token=refresh_token, token_type="bearer"
+        )
+
+    async def _get_db_user_by_jwt(self, token: str) -> UserInDBDTO:
+        username = self._decore_jwt(token, is_refresh=False)
+        try:
+            db_user = await self._get_db_user_by_username_or_email(username)
+        except NoResultFound:
+            raise JWTError
+        return db_user
+
+    @staticmethod
+    def _decore_jwt(token: str, is_refresh: bool) -> str:
         payload = jwt.decode(
             token, settings.secret_key, algorithms=[settings.jwt.algorithm]
         )
         username: str = payload.get("sub")
-        if username is None:
+        token_type: str = payload.get("token_type")
+        if username is None or (token_type == "refresh") is not is_refresh:
             raise JWTError
-        try:
-            db_user = await self._get_db_user_by_username_or_email(username, **kwargs)
-        except NoResultFound:
-            raise JWTError
-        return db_user
+        return username
