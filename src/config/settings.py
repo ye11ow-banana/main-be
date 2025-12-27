@@ -26,12 +26,17 @@ class EmailSettings(BaseModel):
     smtp_ssl_tls: bool = False
 
 
+class TZSettings(BaseModel):
+    local: str = "Europe/Kyiv"
+
+
 class Settings(BaseSettings):
     secret_key: str = "secret"
 
     db: PostgresDBSettings = PostgresDBSettings()
     jwt: JWTSettings = JWTSettings()
     email: EmailSettings = EmailSettings()
+    tz: TZSettings = TZSettings()
 
     model_config = SettingsConfigDict(
         env_file=".env",

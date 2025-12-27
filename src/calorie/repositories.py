@@ -6,13 +6,34 @@ from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from calorie import orm
-from calorie.models import TrendItem
+from calorie.models import TrendItem, DayInDBDTO
 from models import DateRangeDTO
 from repository import SQLAlchemyRepository
 
 
 class DayRepository(SQLAlchemyRepository):
     model = orm.Day
+
+    async def get_first_and_last(
+        self, /, **data: str | int | UUID
+    ) -> tuple[DayInDBDTO, DayInDBDTO]:
+        query = (
+            select(self.model)
+            .filter_by(**data)
+            .order_by(self.model.created_at.asc())
+            .limit(1)
+        )
+        response = await self._session.execute(query)
+        first = response.scalar_one()
+        query = (
+            select(self.model)
+            .filter_by(**data)
+            .order_by(self.model.created_at.desc())
+            .limit(1)
+        )
+        response = await self._session.execute(query)
+        last = response.scalar_one()
+        return DayInDBDTO.model_validate(first), DayInDBDTO.model_validate(last)
 
     async def get_weight_trend(
         self, user_id: UUID, date_range: DateRangeDTO

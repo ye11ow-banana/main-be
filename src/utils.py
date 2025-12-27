@@ -1,4 +1,8 @@
+from datetime import timedelta, date, datetime
 from typing import Sequence
+from zoneinfo import ZoneInfo
+
+from config import settings
 
 
 class PydanticConvertor:
@@ -60,3 +64,14 @@ class Pagination:
 
     def get_offset(self) -> int:
         return (self._page - 1) * self.limit
+
+
+def this_month_range(tz: str = settings.tz.local) -> tuple[date, date]:
+    today = datetime.now(ZoneInfo(tz)).date()
+    start = today.replace(day=1)
+    if start.month == 12:
+        next_month = date(start.year + 1, 1, 1)
+    else:
+        next_month = date(start.year, start.month + 1, 1)
+    end = next_month - timedelta(days=1)
+    return start, end
