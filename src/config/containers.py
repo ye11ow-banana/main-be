@@ -6,6 +6,7 @@ from sqlalchemy.orm import sessionmaker
 from app.services import AppService
 from auth.services.authentication import JWTAuthenticationService
 from auth.services.registration import RegistrationService
+from calorie.services.trend import TrendService
 from config import settings
 from notification.services.email import EmailNotificationService
 from unitofwork import UnitOfWork
@@ -37,4 +38,5 @@ class Container(containers.DeclarativeContainer):
     jwt_authentication_service = providers.Factory(JWTAuthenticationService, uow=uow)
     registration_service = providers.Factory(RegistrationService, uow=uow)
     notification_service = providers.Factory(EmailNotificationService, uow=uow)
-    app_service = providers.Singleton(AppService, uow=uow)
+    app_service = providers.Factory(AppService, uow=uow)
+    trend_service = providers.Factory(TrendService, uow=uow)

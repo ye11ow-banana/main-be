@@ -1,6 +1,7 @@
+from datetime import date
 from typing import Generic, Literal, TypeVar
 
-from pydantic import BaseModel
+from pydantic import BaseModel, model_validator
 
 S = TypeVar("S", bound=BaseModel)
 
@@ -35,3 +36,14 @@ class PaginationDTO(BaseModel, Generic[S]):
 class ErrorEventDTO(BaseModel):
     event: Literal["error"]
     data: dict[str, str]
+
+
+class DateRangeDTO(BaseModel):
+    start_date: date
+    end_date: date
+
+    @model_validator(mode="after")
+    def validate_date_order(self):
+        if self.start_date > self.end_date:
+            raise ValueError("start_date must be <= end_date")
+        return self
