@@ -3,7 +3,7 @@ from decimal import Decimal
 from enum import StrEnum
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from models import DateRangeDTO
 
@@ -57,10 +57,29 @@ class ProductDTO(BaseModel):
 
     id: UUID
     name: str
+    weight: Decimal
     proteins: Decimal
     fats: Decimal
     carbs: Decimal
     calories: Decimal
+
+    @model_validator(mode="before")
+    @classmethod
+    def _from_day_product(cls, obj):
+        if hasattr(obj, "product") and hasattr(obj, "weight"):
+            p = getattr(obj, "product", None)
+            if p is None:
+                raise ValueError("DayProduct.product is None (not loaded or missing)")
+            return {
+                "id": p.id,
+                "name": p.name,
+                "weight": obj.weight,
+                "proteins": p.proteins,
+                "fats": p.fats,
+                "carbs": p.carbs,
+                "calories": p.calories,
+            }
+        return obj
 
 
 class DayFullInfoDTO(BaseModel):
@@ -75,4 +94,4 @@ class DayFullInfoDTO(BaseModel):
     total_fats: Decimal = Decimal("0.0")
     total_carbs: Decimal = Decimal("0.0")
     total_calories: Decimal = Decimal("0.0")
-    products: list[ProductDTO]
+    products: list[ProductDTO] = Field(validation_alias="day_products")

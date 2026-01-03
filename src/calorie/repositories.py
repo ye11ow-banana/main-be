@@ -60,7 +60,7 @@ class DayRepository(SQLAlchemyRepository):
             days_filter.to_date_range().format_to_exclusive_range()
         )
         query = query.filter(self.model.created_at >= start_dt)
-        query = query.filter(self.model.created_at <= end_dt_exclusive)
+        query = query.filter(self.model.created_at < end_dt_exclusive)
 
         query = query.offset(pagination.get_offset()).limit(pagination.limit)
         response = await self._session.execute(query)

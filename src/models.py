@@ -52,3 +52,8 @@ class DateRangeDTO(BaseModel):
         start_dt = datetime.combine(self.start_date, time.min)
         end_dt_exclusive = datetime.combine(self.end_date + timedelta(days=1), time.min)
         return start_dt, end_dt_exclusive
+
+
+class NameCodeDTO(BaseModel):
+    name: str
+    code: str

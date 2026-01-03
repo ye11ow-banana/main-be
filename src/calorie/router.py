@@ -7,9 +7,10 @@ from calorie.models import (
     TrendTypeEnum,
     DaysFilterDTO,
     DayFullInfoDTO,
+    DaysFilterSortByEnum,
 )
 from config.dependencies import TrendServiceDep, ActiveUserDep, DayServiceDep
-from models import ResponseDTO, DateRangeDTO, PaginationDTO
+from models import ResponseDTO, DateRangeDTO, PaginationDTO, NameCodeDTO
 from utils import Pagination
 
 router = APIRouter(prefix="/calorie", tags=["Calorie"])
@@ -52,3 +53,19 @@ async def get_days(
     pagination = Pagination(page=days_filter.page)
     days = await day_service.get_paginated_days(user.id, pagination, days_filter)
     return ResponseDTO[PaginationDTO[DayFullInfoDTO]](data=days)
+
+
+@router.get("/sort_bys")
+@inject
+async def get_sort_bys(_: ActiveUserDep) -> ResponseDTO[NameCodeDTO]:
+    results = [
+        NameCodeDTO(name="Most recent", code=DaysFilterSortByEnum.MOST_RECENT.value),
+        NameCodeDTO(name="Oldest", code=DaysFilterSortByEnum.OLDEST.value),
+        NameCodeDTO(
+            name="Most calories", code=DaysFilterSortByEnum.MOST_CALORIES.value
+        ),
+        NameCodeDTO(
+            name="Lowest weight", code=DaysFilterSortByEnum.LOWEST_WEIGHT.value
+        ),
+    ]
+    return ResponseDTO[NameCodeDTO](data=results)
