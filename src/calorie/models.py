@@ -20,7 +20,7 @@ class TrendFilterDTO(DateRangeDTO):
         return DateRangeDTO(start_date=self.start_date, end_date=self.end_date)
 
 
-class TrendItem(BaseModel):
+class TrendItemDTO(BaseModel):
     date: date
     value: Decimal
 
@@ -35,3 +35,44 @@ class DayInDBDTO(BaseModel):
     created_at: datetime | None = None
     updated_at: datetime | None = None
     user_id: UUID | None = None
+
+
+class DaysFilterSortByEnum(StrEnum):
+    MOST_RECENT = "most_recent"
+    OLDEST = "oldest"
+    MOST_CALORIES = "most_calories"
+    LOWEST_WEIGHT = "lowest_weight"
+
+
+class DaysFilterDTO(DateRangeDTO):
+    sort_by: DaysFilterSortByEnum
+    page: int = 1
+
+    def to_date_range(self) -> DateRangeDTO:
+        return DateRangeDTO(start_date=self.start_date, end_date=self.end_date)
+
+
+class ProductDTO(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    name: str
+    proteins: Decimal
+    fats: Decimal
+    carbs: Decimal
+    calories: Decimal
+
+
+class DayFullInfoDTO(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    body_weight: Decimal | None = None
+    body_fat: Decimal | None = None
+    trend: Decimal | None = None
+    created_at: datetime
+    total_proteins: Decimal = Decimal("0.0")
+    total_fats: Decimal = Decimal("0.0")
+    total_carbs: Decimal = Decimal("0.0")
+    total_calories: Decimal = Decimal("0.0")
+    products: list[ProductDTO]

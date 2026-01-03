@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime, timedelta, time
 from typing import Generic, Literal, TypeVar
 
 from pydantic import BaseModel, model_validator
@@ -47,3 +47,8 @@ class DateRangeDTO(BaseModel):
         if self.start_date > self.end_date:
             raise ValueError("start_date must be <= end_date")
         return self
+
+    def format_to_exclusive_range(self) -> tuple[date, date]:
+        start_dt = datetime.combine(self.start_date, time.min)
+        end_dt_exclusive = datetime.combine(self.end_date + timedelta(days=1), time.min)
+        return start_dt, end_dt_exclusive
