@@ -5,9 +5,9 @@ from sqlalchemy.dialects.postgresql import insert
 
 from notification import orm
 from notification.models import (
-    VerificationCodeInDBDTO,
-    VerificationCodeDTO,
     MergeVerificationCode,
+    VerificationCodeDTO,
+    VerificationCodeInDBDTO,
 )
 from notification.orm import expires_in_10_minutes
 from repository import SQLAlchemyRepository

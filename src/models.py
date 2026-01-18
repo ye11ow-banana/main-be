@@ -1,4 +1,4 @@
-from datetime import date, datetime, timedelta, time
+from datetime import date, datetime, time, timedelta
 from typing import Generic, Literal, TypeVar
 
 from pydantic import BaseModel, model_validator
@@ -57,3 +57,11 @@ class DateRangeDTO(BaseModel):
 class NameCodeDTO(BaseModel):
     name: str
     code: str
+
+
+class SearchDTO(BaseModel):
+    q: str = ""
+
+
+class PaginatedSearchFilterDTO(SearchDTO):
+    page: int = 1

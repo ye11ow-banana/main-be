@@ -6,15 +6,15 @@ from fastapi.exceptions import HTTPException, RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-import auth.router as auth_router_module
 import app.router as app_router_module
+import auth.router as auth_router_module
 import calorie.router as calorie_router_module
+from config.containers import Container
 from models import (
     ErrorResponseDTO,
     MessageErrorResponseDTO,
     PydanticErrorResponseDTO,
 )
-from config.containers import Container
 from utils import PydanticConvertor
 
 app = FastAPI(
@@ -49,7 +49,7 @@ app.add_middleware(
 
 
 @app.exception_handler(RequestValidationError)
-async def validation_exception_handler(_: Request, exc: RequestValidationError):
+async def request_validation_exception_handler(_: Request, exc: RequestValidationError):
     errors = PydanticConvertor().convert_errors(exc.errors())
     return JSONResponse(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -58,7 +58,7 @@ async def validation_exception_handler(_: Request, exc: RequestValidationError):
 
 
 @app.exception_handler(HTTPException)
-async def validation_exception_handler(_: Request, exc: HTTPException):
+async def http_exception_handler(_: Request, exc: HTTPException):
     return JSONResponse(
         status_code=exc.status_code,
         content=jsonable_encoder({"error": {"message": exc.detail}}),

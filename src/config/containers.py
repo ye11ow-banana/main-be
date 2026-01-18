@@ -1,7 +1,7 @@
 from dependency_injector import containers, providers
 from openai import OpenAI
 from sqlalchemy import NullPool
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, AsyncEngine
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
 from app.services import AppService
@@ -9,6 +9,7 @@ from auth.services.authentication import JWTAuthenticationService
 from auth.services.registration import RegistrationService
 from calorie.openai_client.client import CalorieOpenAIClient
 from calorie.services.day import DayService
+from calorie.services.product import ProductService
 from calorie.services.trend import TrendService
 from config import settings
 from notification.services.email import EmailNotificationService
@@ -48,3 +49,4 @@ class Container(containers.DeclarativeContainer):
     day_service = providers.Factory(
         DayService, uow=uow, calorie_openai_client=calorie_openai_client
     )
+    product_service = providers.Factory(ProductService, uow=uow)

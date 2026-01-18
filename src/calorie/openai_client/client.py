@@ -5,8 +5,8 @@ from typing import Any
 from openai import OpenAI
 
 from calorie.models import (
-    OpenAIProductListResponseDTO,
     OpenAIProductCreationListResponseDTO,
+    OpenAIProductListResponseDTO,
 )
 from calorie.openai_client.openai_schemas import (
     ITEMS_SCHEMA,

@@ -1,19 +1,20 @@
 from decimal import Decimal
 from uuid import UUID
 
-from sqlalchemy import select, func, case
+from sqlalchemy import case, func, select
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import selectinload
 
 from calorie import orm
 from calorie.models import (
-    TrendItemDTO,
+    DayFullInfoDTO,
     DayInDBDTO,
     DaysFilterDTO,
     DaysFilterSortByEnum,
-    DayFullInfoDTO,
-    OpenAIProductMatchDTO,
     OpenAIProductCreationDTO,
+    OpenAIProductMatchDTO,
+    ProductDTO,
+    TrendItemDTO,
 )
 from models import DateRangeDTO
 from repository import SQLAlchemyRepository
@@ -207,3 +208,18 @@ class ProductRepository(SQLAlchemyRepository):
         self._session.add(new_model_object)
         await self._session.flush()
         return new_model_object.id
+
+    async def search_by_name(self, q: str, pagination: Pagination) -> list[ProductDTO]:
+        query = select(self.model).order_by(self.model.created_at.desc())
+        if q:
+            query = query.where(self.model.name.ilike(f"%{q}%"))
+        query = query.offset(pagination.get_offset()).limit(pagination.limit)
+        response = await self._session.execute(query)
+        results = response.scalars().all()
+        return [ProductDTO.model_validate(product) for product in results]
+
+    async def count_by_name(self, q: str) -> int:
+        query = select(func.count()).select_from(self.model)
+        if q:
+            query = query.where(self.model.name.ilike(f"%{q}%"))
+        return (await self._session.execute(query)).scalar()

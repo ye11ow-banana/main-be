@@ -8,8 +8,8 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from database import Base, created_at, uuidpk
 
 if TYPE_CHECKING:
-    from notification.orm import VerificationCode
     from calorie.orm import Day
+    from notification.orm import VerificationCode
 
 
 class User(Base):

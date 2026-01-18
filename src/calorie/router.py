@@ -1,17 +1,29 @@
 from dependency_injector.wiring import inject
-from fastapi import APIRouter, Query, status, HTTPException, UploadFile, File, Form
+from fastapi import APIRouter, File, Form, HTTPException, Query, UploadFile, status
 
 from calorie.models import (
+    DayFullInfoDTO,
+    DaysFilterDTO,
+    DaysFilterSortByEnum,
+    IngestResponseDTO,
+    ProductDTO,
     TrendFilterDTO,
     TrendItemDTO,
     TrendTypeEnum,
-    DaysFilterDTO,
-    DayFullInfoDTO,
-    DaysFilterSortByEnum,
-    IngestResponseDTO,
 )
-from config.dependencies import TrendServiceDep, ActiveUserDep, DayServiceDep
-from models import ResponseDTO, DateRangeDTO, PaginationDTO, NameCodeDTO
+from config.dependencies import (
+    ActiveUserDep,
+    DayServiceDep,
+    ProductServiceDep,
+    TrendServiceDep,
+)
+from models import (
+    DateRangeDTO,
+    NameCodeDTO,
+    PaginatedSearchFilterDTO,
+    PaginationDTO,
+    ResponseDTO,
+)
 from utils import Pagination
 
 router = APIRouter(prefix="/calorie", tags=["Calorie"])
@@ -78,14 +90,27 @@ async def ingest(
     day_service: DayServiceDep,
     image: UploadFile = File(...),
     description: str | None = Form(None),
-) -> IngestResponseDTO:
+) -> ResponseDTO[IngestResponseDTO]:
     if not image.content_type or not image.content_type.startswith("image/"):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Upload an image file"
         )
 
-    return await day_service.process_ingestion_image(
+    results = await day_service.process_ingestion_image(
         image_bytes=await image.read(),
         image_mime=image.content_type,
         user_text=description,
     )
+    return ResponseDTO[IngestResponseDTO](data=results)
+
+
+@router.get("/products")
+@inject
+async def get_products(
+    _: ActiveUserDep,
+    product_service: ProductServiceDep,
+    search: PaginatedSearchFilterDTO = Query(),
+) -> ResponseDTO[PaginationDTO[ProductDTO]]:
+    pagination = Pagination(page=search.page)
+    products = await product_service.search_products(search.q, pagination)
+    return ResponseDTO[PaginationDTO[ProductDTO]](data=products)

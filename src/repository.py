@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Sequence, Type, Mapping, Any
+from typing import Any, Mapping, Sequence, Type
 from uuid import UUID
 
 from sqlalchemy import Row, delete, func, select, update

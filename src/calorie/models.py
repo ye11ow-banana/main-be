@@ -3,7 +3,7 @@ from decimal import Decimal
 from enum import StrEnum
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from models import DateRangeDTO
 
@@ -52,7 +52,7 @@ class DaysFilterDTO(DateRangeDTO):
         return DateRangeDTO(start_date=self.start_date, end_date=self.end_date)
 
 
-class ProductDTO(BaseModel):
+class DayProductDTO(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: UUID
@@ -94,13 +94,20 @@ class DayFullInfoDTO(BaseModel):
     total_fats: Decimal = Decimal("0.0")
     total_carbs: Decimal = Decimal("0.0")
     total_calories: Decimal = Decimal("0.0")
-    products: list[ProductDTO] = Field(validation_alias="day_products")
+    products: list[DayProductDTO] = Field(validation_alias="day_products")
 
 
 class OpenAIProductDTO(BaseModel):
     user: str
     raw_name: str
     weight: str  # can be 123 or 123+49
+
+    @field_validator("raw_name", mode="before")
+    @classmethod
+    def capitalize_raw_name(cls, v):
+        if isinstance(v, str):
+            return v.capitalize()
+        return v
 
 
 class OpenAIProductListResponseDTO(BaseModel):
@@ -140,3 +147,15 @@ class IngestResponseDTO(BaseModel):
     products: list[OpenAIProductMatchDTO]
     warnings: list[str]
     unparsed: list[str]
+
+
+class ProductDTO(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    name: str
+    proteins: Decimal
+    fats: Decimal
+    carbs: Decimal
+    calories: Decimal
+    created_at: datetime

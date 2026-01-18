@@ -1,7 +1,8 @@
 from typing import Annotated
-from fastapi import HTTPException, status, Request, Depends
-from fastapi.security.utils import get_authorization_scheme_param
+
 from dependency_injector.wiring import Provide, inject
+from fastapi import Depends, HTTPException, Request, status
+from fastapi.security.utils import get_authorization_scheme_param
 
 from app.services import AppService
 from auth.exceptions import AuthenticationException
@@ -9,6 +10,7 @@ from auth.models import UserInfoDTO
 from auth.services.authentication import JWTAuthenticationService
 from auth.services.registration import RegistrationService
 from calorie.services.day import DayService
+from calorie.services.product import ProductService
 from calorie.services.trend import TrendService
 from config.containers import Container
 from notification.services.email import EmailNotificationService
@@ -64,3 +66,6 @@ ActiveUserDep = Annotated[UserInfoDTO, Depends(active_user)]
 AppServiceDep = Annotated[AppService, Depends(Provide[Container.app_service])]
 TrendServiceDep = Annotated[TrendService, Depends(Provide[Container.trend_service])]
 DayServiceDep = Annotated[DayService, Depends(Provide[Container.day_service])]
+ProductServiceDep = Annotated[
+    ProductService, Depends(Provide[Container.product_service])
+]

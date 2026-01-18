@@ -10,6 +10,7 @@ tasks:
   format:
     desc: Format code
     cmds:
+      - ruff check . --fix
       - ruff format
 
   test:

@@ -5,18 +5,18 @@ from uuid import UUID
 from sqlalchemy.exc import NoResultFound
 
 from calorie.models import (
-    DaysFilterDTO,
     DayFullInfoDTO,
-    OpenAIProductDTO,
-    OpenAIProductMatchDTO,
+    DaysFilterDTO,
     IngestResponseDTO,
     OpenAIProductCreationDTO,
+    OpenAIProductDTO,
+    OpenAIProductMatchDTO,
 )
 from calorie.openai_client.client import CalorieOpenAIClient
 from config import settings
 from models import DateRangeDTO, PaginationDTO
 from unitofwork import IUnitOfWork
-from utils import this_month_range, Pagination
+from utils import Pagination, this_month_range
 
 
 class DayService:

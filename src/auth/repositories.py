@@ -1,7 +1,7 @@
 from typing import Sequence
 from uuid import UUID
 
-from sqlalchemy import select, or_
+from sqlalchemy import or_, select
 
 from auth import orm
 from auth.models import UserInDBDTO, UserInfoDTO

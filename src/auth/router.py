@@ -7,18 +7,18 @@ from auth.exceptions import (
     WrongEmailVerificationCodeException,
 )
 from auth.models import (
+    RefreshTokenDTO,
     TokenDTO,
     UserInCreateDTO,
     UserInfoDTO,
     UserInLoginDTO,
     UserVerificationCodeDTO,
-    RefreshTokenDTO,
 )
 from config.dependencies import (
-    JWTAuthenticationDep,
     AuthenticatedUserDep,
-    RegistrationDep,
     EmailNotificationDep,
+    JWTAuthenticationDep,
+    RegistrationDep,
 )
 from models import ResponseDTO, SuccessDTO
 
