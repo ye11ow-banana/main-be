@@ -148,3 +148,14 @@ async def create_product(
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     return ResponseDTO[ObjectCreationDTO](data=ObjectCreationDTO(id=product_id))
+
+
+@router.delete("/products/{product_id}")
+@inject
+async def delete_product(
+    _: ActiveUserDep,
+    product_service: ProductServiceDep,
+    product_id: UUID,
+) -> ResponseDTO[SuccessDTO]:
+    await product_service.delete_product(product_id)
+    return ResponseDTO[SuccessDTO](data=SuccessDTO())

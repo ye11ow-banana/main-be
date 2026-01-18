@@ -43,3 +43,8 @@ class ProductService:
                 raise ValueError("Error while product creation")
             await self._uow.commit()
             return product.id
+
+    async def delete_product(self, product_id: UUID) -> None:
+        async with self._uow:
+            await self._uow.products.remove(id=product_id)
+            await self._uow.commit()
