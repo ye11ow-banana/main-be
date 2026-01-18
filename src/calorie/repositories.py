@@ -149,7 +149,7 @@ class ProductRepository(SQLAlchemyRepository):
         self,
         user: str,
         raw_name: str,
-        weight: int,
+        weight: str,
         *,
         min_similarity: float = 0.20,
         use_levenshtein_for_short: bool = True,

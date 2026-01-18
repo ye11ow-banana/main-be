@@ -32,12 +32,18 @@ class CalorieOpenAIClient:
         2) Identify two user rows:
            - Row labeled 'М' = Mykhailo
            - Row labeled 'А' = Anastasiia
-        3) For each header, read grams ONLY from the cell in Mykhailo row and Anastasiia row under that header.
-        4) Mykhailo row or Anastasiia row can be empty under each header. If two of them are empty in a header, skip that header.
+        3) For each header, read values ONLY from the cell in Mykhailo row and Anastasiia row under that header.
+        4) Mykhailo row or Anastasiia row can be empty under each header. If both of them are empty in a header, skip that header.
+
         Rules:
-        - Output ONLY items that are clearly in grams (integers). If a value is unclear, skip it and add to warnings.
+        - A cell can contain:
+          - A single integer in grams (e.g., "40")
+          - A sum of integers in grams written as math (e.g., "40+59" or "40+60+50")
+        - If the cell contains math, keep it exactly as written (do NOT calculate it).
+        - Output ONLY items that are clearly in grams (integers or integer sums).
+        - If a value is unclear, skip it and add it to warnings.
         - Do NOT read totals or notes outside the grid.
-        Return JSON strictly by schema.
+        - Return JSON strictly by schema.
         """
 
         # noinspection PyTypeChecker

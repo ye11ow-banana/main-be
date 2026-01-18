@@ -8,7 +8,7 @@ ITEMS_SCHEMA = {
                 "properties": {
                     "user": {"type": "string", "enum": ["Mykhailo", "Anastasiia"]},
                     "raw_name": {"type": "string"},
-                    "weight": {"type": "integer", "minimum": 1},
+                    "weight": {"type": "string"},
                 },
                 "required": ["user", "raw_name", "weight"],
                 "additionalProperties": False,

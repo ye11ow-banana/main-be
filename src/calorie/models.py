@@ -100,7 +100,7 @@ class DayFullInfoDTO(BaseModel):
 class OpenAIProductDTO(BaseModel):
     user: str
     raw_name: str
-    weight: int
+    weight: str  # can be 123 or 123+49
 
 
 class OpenAIProductListResponseDTO(BaseModel):
@@ -113,7 +113,7 @@ class OpenAIProductMatchDTO(BaseModel):
     user: str
     product_id: UUID
     name: str
-    weight: int
+    weight: str
     matched_score: Decimal
 
 
