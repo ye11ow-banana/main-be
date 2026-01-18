@@ -1,7 +1,8 @@
 from decimal import Decimal
 from uuid import UUID
 
-from sqlalchemy import select, func
+from sqlalchemy import select, func, case
+from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import selectinload
 
 from calorie import orm
@@ -11,6 +12,8 @@ from calorie.models import (
     DaysFilterDTO,
     DaysFilterSortByEnum,
     DayFullInfoDTO,
+    OpenAIProductMatchDTO,
+    OpenAIProductCreationDTO,
 )
 from models import DateRangeDTO
 from repository import SQLAlchemyRepository
@@ -141,3 +144,66 @@ class DayRepository(SQLAlchemyRepository):
 
 class ProductRepository(SQLAlchemyRepository):
     model = orm.Product
+
+    async def find_by_raw_name(
+        self,
+        user: str,
+        raw_name: str,
+        weight: int,
+        *,
+        min_similarity: float = 0.20,
+        use_levenshtein_for_short: bool = True,
+    ) -> tuple[OpenAIProductMatchDTO, float]:
+        name_lowercase = func.lower(self.model.name)
+        sim = func.similarity(name_lowercase, raw_name)
+        if use_levenshtein_for_short:
+            lev = func.levenshtein(name_lowercase, raw_name)
+            lev_score = case(
+                (
+                    func.length(raw_name) <= 4,
+                    case(
+                        (lev == 0, 1.0), (lev == 1, 0.75), (lev == 2, 0.50), else_=0.0
+                    ),
+                ),
+                else_=0.0,
+            )
+            score_expression = (sim * 0.85) + (lev_score * 0.15)
+        else:
+            score_expression = sim
+
+        score = score_expression.label("score")
+        stmt = (
+            select(self.model, score_expression.label("score"))
+            .where(name_lowercase.op("%")(raw_name))
+            .where(sim >= min_similarity)
+            .order_by(score.desc())
+            .limit(1)
+        )
+
+        res = await self._session.execute(stmt)
+        row = res.first()
+        if row is None:
+            raise NoResultFound(f"No product match found for raw_name={raw_name!r}")
+
+        product, score = row[0], float(row[1])
+
+        dto = OpenAIProductMatchDTO(
+            user=user,
+            product_id=product.id,
+            name=product.name,
+            weight=weight,
+            matched_score=Decimal(str(score)),
+        )
+        return dto, score
+
+    async def add_openai_product(self, product: OpenAIProductCreationDTO) -> UUID:
+        new_model_object = self.model(
+            name=product.name_ua,
+            proteins=product.per_100g.proteins,
+            fats=product.per_100g.fats,
+            carbs=product.per_100g.carbs,
+            calories=product.per_100g.calories,
+        )
+        self._session.add(new_model_object)
+        await self._session.flush()
+        return new_model_object.id

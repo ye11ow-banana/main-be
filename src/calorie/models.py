@@ -57,7 +57,7 @@ class ProductDTO(BaseModel):
 
     id: UUID
     name: str
-    weight: Decimal
+    weight: int
     proteins: Decimal
     fats: Decimal
     carbs: Decimal
@@ -95,3 +95,48 @@ class DayFullInfoDTO(BaseModel):
     total_carbs: Decimal = Decimal("0.0")
     total_calories: Decimal = Decimal("0.0")
     products: list[ProductDTO] = Field(validation_alias="day_products")
+
+
+class OpenAIProductDTO(BaseModel):
+    user: str
+    raw_name: str
+    weight: int
+
+
+class OpenAIProductListResponseDTO(BaseModel):
+    items: list[OpenAIProductDTO]
+    warnings: list[str]
+    unparsed: list[str]
+
+
+class OpenAIProductMatchDTO(BaseModel):
+    user: str
+    product_id: UUID
+    name: str
+    weight: int
+    matched_score: Decimal
+
+
+class OpenAIPer100gDTO(BaseModel):
+    proteins: Decimal
+    fats: Decimal
+    carbs: Decimal
+    calories: Decimal
+
+
+class OpenAIProductCreationDTO(BaseModel):
+    raw_name: str
+    name_ua: str
+    per_100g: OpenAIPer100gDTO
+    confidence: Decimal
+    assumptions: str
+
+
+class OpenAIProductCreationListResponseDTO(BaseModel):
+    products: list[OpenAIProductCreationDTO]
+
+
+class IngestResponseDTO(BaseModel):
+    products: list[OpenAIProductMatchDTO]
+    warnings: list[str]
+    unparsed: list[str]

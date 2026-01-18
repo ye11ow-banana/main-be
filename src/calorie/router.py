@@ -1,5 +1,5 @@
 from dependency_injector.wiring import inject
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, status, HTTPException, UploadFile, File, Form
 
 from calorie.models import (
     TrendFilterDTO,
@@ -8,6 +8,7 @@ from calorie.models import (
     DaysFilterDTO,
     DayFullInfoDTO,
     DaysFilterSortByEnum,
+    IngestResponseDTO,
 )
 from config.dependencies import TrendServiceDep, ActiveUserDep, DayServiceDep
 from models import ResponseDTO, DateRangeDTO, PaginationDTO, NameCodeDTO
@@ -56,7 +57,6 @@ async def get_days(
 
 
 @router.get("/sort_bys")
-@inject
 async def get_sort_bys(_: ActiveUserDep) -> ResponseDTO[NameCodeDTO]:
     results = [
         NameCodeDTO(name="Most recent", code=DaysFilterSortByEnum.MOST_RECENT.value),
@@ -69,3 +69,23 @@ async def get_sort_bys(_: ActiveUserDep) -> ResponseDTO[NameCodeDTO]:
         ),
     ]
     return ResponseDTO[NameCodeDTO](data=results)
+
+
+@router.post("/ingest")
+@inject
+async def ingest(
+    _: ActiveUserDep,
+    day_service: DayServiceDep,
+    image: UploadFile = File(...),
+    description: str | None = Form(None),
+) -> IngestResponseDTO:
+    if not image.content_type or not image.content_type.startswith("image/"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Upload an image file"
+        )
+
+    return await day_service.process_ingestion_image(
+        image_bytes=await image.read(),
+        image_mime=image.content_type,
+        user_text=description,
+    )

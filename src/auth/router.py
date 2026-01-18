@@ -59,7 +59,6 @@ async def refresh_token(
 
 
 @router.get("/me")
-@inject
 async def get_current_user(
     user: AuthenticatedUserDep,
 ) -> ResponseDTO[UserInfoDTO]:

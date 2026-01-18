@@ -73,7 +73,7 @@ class DayProduct(Base):
         primary_key=True,
     )
 
-    weight: Mapped[Decimal] = mapped_column(nullable=False)
+    weight: Mapped[int] = mapped_column(nullable=False)
 
     day: Mapped["Day"] = relationship("Day", back_populates="day_products")
     product: Mapped["Product"] = relationship("Product", back_populates="day_products")

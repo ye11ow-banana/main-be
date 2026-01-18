@@ -17,6 +17,8 @@ dependencies = [
     "asyncpg>=0.31.0",
     "fastapi-mail>=1.6.1",
     "argon2-cffi>=25.1.0",
+    "openai>=2.14.0",
+    "python-multipart>=0.0.21",
 ]
 
 [dependency-groups]

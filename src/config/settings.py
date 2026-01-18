@@ -30,6 +30,12 @@ class TZSettings(BaseModel):
     local: str = "Europe/Kyiv"
 
 
+class OpenAISettings(BaseModel):
+    api_key: str = ""
+    model_vision: str = ""
+    model_text: str = ""
+
+
 class Settings(BaseSettings):
     secret_key: str = "secret"
 
@@ -37,6 +43,7 @@ class Settings(BaseSettings):
     jwt: JWTSettings = JWTSettings()
     email: EmailSettings = EmailSettings()
     tz: TZSettings = TZSettings()
+    openai: OpenAISettings = OpenAISettings()
 
     model_config = SettingsConfigDict(
         env_file=".env",
