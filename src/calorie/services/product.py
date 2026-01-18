@@ -1,5 +1,7 @@
 from uuid import UUID
 
+from sqlalchemy.exc import IntegrityError
+
 from calorie.models import ProductCreationDTO, ProductDTO
 from models import PaginationDTO
 from unitofwork import IUnitOfWork
@@ -25,7 +27,19 @@ class ProductService:
 
     async def update_product(self, product_id: UUID, data: ProductCreationDTO) -> None:
         async with self._uow:
-            await self._uow.products.update(
-                what_to_update={"id": product_id}, **data.model_dump()
-            )
+            try:
+                await self._uow.products.update(
+                    what_to_update={"id": product_id}, **data.model_dump()
+                )
+            except IntegrityError:
+                raise ValueError("Error while product update")
+        await self._uow.commit()
+
+    async def create_product(self, data: ProductCreationDTO) -> UUID:
+        async with self._uow:
+            try:
+                product = await self._uow.products.add(**data.model_dump())
+            except IntegrityError:
+                raise ValueError("Error while product creation")
             await self._uow.commit()
+            return product.id

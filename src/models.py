@@ -1,5 +1,6 @@
 from datetime import date, datetime, time, timedelta
 from typing import Generic, Literal, TypeVar
+from uuid import UUID
 
 from pydantic import BaseModel, model_validator
 
@@ -65,3 +66,7 @@ class SearchDTO(BaseModel):
 
 class PaginatedSearchFilterDTO(SearchDTO):
     page: int = 1
+
+
+class ObjectCreationDTO(BaseModel):
+    id: UUID
