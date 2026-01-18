@@ -149,13 +149,16 @@ class IngestResponseDTO(BaseModel):
     unparsed: list[str]
 
 
-class ProductDTO(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: UUID
+class ProductCreationDTO(BaseModel):
     name: str
     proteins: Decimal
     fats: Decimal
     carbs: Decimal
     calories: Decimal
+
+
+class ProductDTO(ProductCreationDTO):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
     created_at: datetime

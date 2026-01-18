@@ -1,11 +1,15 @@
+from uuid import UUID
+
 from dependency_injector.wiring import inject
 from fastapi import APIRouter, File, Form, HTTPException, Query, UploadFile, status
+from sqlalchemy.exc import IntegrityError
 
 from calorie.models import (
     DayFullInfoDTO,
     DaysFilterDTO,
     DaysFilterSortByEnum,
     IngestResponseDTO,
+    ProductCreationDTO,
     ProductDTO,
     TrendFilterDTO,
     TrendItemDTO,
@@ -23,6 +27,7 @@ from models import (
     PaginatedSearchFilterDTO,
     PaginationDTO,
     ResponseDTO,
+    SuccessDTO,
 )
 from utils import Pagination
 
@@ -114,3 +119,18 @@ async def get_products(
     pagination = Pagination(page=search.page)
     products = await product_service.search_products(search.q, pagination)
     return ResponseDTO[PaginationDTO[ProductDTO]](data=products)
+
+
+@router.put("/products/{product_id}")
+@inject
+async def update_product(
+    _: ActiveUserDep,
+    product_service: ProductServiceDep,
+    product_id: UUID,
+    data: ProductCreationDTO,
+) -> ResponseDTO[SuccessDTO]:
+    try:
+        await product_service.update_product(product_id, data)
+    except IntegrityError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    return ResponseDTO[SuccessDTO](data=SuccessDTO())
