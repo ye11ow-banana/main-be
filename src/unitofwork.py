@@ -5,7 +5,7 @@ from sqlalchemy.orm import sessionmaker
 
 from app.repositories import AppRepository
 from auth.repositories import UserRepository
-from calorie.repositories import DayRepository, ProductRepository
+from calorie.repositories import DayProductRepository, DayRepository, ProductRepository
 from notification.repositories import VerificationCodeRepository
 
 
@@ -15,6 +15,7 @@ class IUnitOfWork(ABC):
     apps: AppRepository
     days: DayRepository
     products: ProductRepository
+    day_products: DayProductRepository
 
     @abstractmethod
     def __init__(self):
@@ -48,6 +49,7 @@ class UnitOfWork(IUnitOfWork):
         self.apps = AppRepository(self._session)
         self.days = DayRepository(self._session)
         self.products = ProductRepository(self._session)
+        self.day_products = DayProductRepository(self._session)
 
     async def __aexit__(self, *args):
         await self.rollback()

@@ -15,10 +15,12 @@ from auth.models import (
     UserVerificationCodeDTO,
 )
 from config.dependencies import (
+    ActiveUserDep,
     AuthenticatedUserDep,
     EmailNotificationDep,
     JWTAuthenticationDep,
     RegistrationDep,
+    UserServiceDep,
 )
 from models import ResponseDTO, SuccessDTO
 
@@ -111,3 +113,12 @@ async def verify_email(
     except WrongEmailVerificationCodeException as e:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, detail=str(e))
     return ResponseDTO[SuccessDTO](data=SuccessDTO())
+
+
+@router.get("/users")
+@inject
+async def get_users(
+    _: ActiveUserDep, user_service: UserServiceDep
+) -> ResponseDTO[UserInfoDTO]:
+    users = await user_service.get_users()
+    return ResponseDTO[UserInfoDTO](data=users)

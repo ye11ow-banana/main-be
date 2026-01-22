@@ -30,10 +30,10 @@ class CalorieOpenAIClient:
         Task:
         1) Identify ONLY the product column headers (top row of the table). Headers are Ukrainian product names.
         2) Identify two user rows:
-           - Row labeled 'М' = Mykhailo
-           - Row labeled 'А' = Anastasiia
-        3) For each header, read values ONLY from the cell in Mykhailo row and Anastasiia row under that header.
-        4) Mykhailo row or Anastasiia row can be empty under each header. If both of them are empty in a header, skip that header.
+           - Row labeled 'М' = ye11ow_banana
+           - Row labeled 'А' = kaminchyk
+        3) For each header, read values ONLY from the cell in ye11ow_banana row and kaminchyk row under that header.
+        4) ye11ow_banana row or kaminchyk row can be empty under each header. If both of them are empty in a header, skip that header.
 
         Rules:
         - A cell can contain:
@@ -78,8 +78,8 @@ class CalorieOpenAIClient:
         Parse user's text into food items with grams.
 
         Input format may contain multiple persons:
-        - "А:" means Anastasiia
-        - "М:" means Mykhailo
+        - "А:" means kaminchyk
+        - "М:" means ye11ow_banana
         Everything after a person tag belongs to that person until the next tag.
 
         Return items with:

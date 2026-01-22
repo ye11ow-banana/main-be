@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from typing import Annotated
 
-from sqlalchemy import UUID, MetaData, text
+from sqlalchemy import UUID, DateTime, MetaData, func, text
 from sqlalchemy.orm import DeclarativeBase, mapped_column
 
 uuidpk = Annotated[
@@ -15,11 +15,12 @@ created_at = Annotated[
 updated_at = Annotated[
     datetime,
     mapped_column(
-        server_default=text("TIMEZONE('utc', now())"),
+        DateTime(timezone=True),
+        server_default=func.timezone("utc", func.now()),
+        onupdate=func.timezone("utc", func.now()),
         nullable=False,
-        onupdate=datetime.utcnow,
     ),
-]  # todo: find a trigger to update this field
+]
 
 
 class Base(DeclarativeBase):

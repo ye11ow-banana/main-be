@@ -4,6 +4,7 @@ from dependency_injector.wiring import inject
 from fastapi import APIRouter, File, Form, HTTPException, Query, UploadFile, status
 
 from calorie.models import (
+    DayCreationDTO,
     DayFullInfoDTO,
     DaysFilterDTO,
     DaysFilterSortByEnum,
@@ -14,6 +15,8 @@ from calorie.models import (
     TrendItemDTO,
     TrendTypeEnum,
 )
+from calorie.services.day_creation import DayCreationService
+from config.containers import Container
 from config.dependencies import (
     ActiveUserDep,
     DayServiceDep,
@@ -158,4 +161,15 @@ async def delete_product(
     product_id: UUID,
 ) -> ResponseDTO[SuccessDTO]:
     await product_service.delete_product(product_id)
+    return ResponseDTO[SuccessDTO](data=SuccessDTO())
+
+
+@router.post("/days")
+@inject
+async def add_day(_: ActiveUserDep, data: DayCreationDTO) -> ResponseDTO[SuccessDTO]:
+    day_creation_service = DayCreationService(uow=Container.uow())
+    try:
+        await day_creation_service.create(data)
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     return ResponseDTO[SuccessDTO](data=SuccessDTO())

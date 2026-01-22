@@ -162,3 +162,38 @@ class ProductDTO(ProductCreationDTO):
 
     id: UUID
     created_at: datetime
+
+
+class UserDayProductCreationDTO(BaseModel):
+    user_id: UUID
+    product_id: UUID
+    weight: int
+
+    @field_validator("weight", mode="before")
+    @classmethod
+    def convert_weight_to_int(cls, v) -> int:
+        if isinstance(v, str):
+            numbers = v.split("+")
+            try:
+                return sum(list(map(int, numbers)))
+            except ValueError:
+                raise ValueError("Weight must be a number or a sum of numbers")
+        raise ValueError("Weight must be a string")
+
+
+class DayCreationDTO(BaseModel):
+    date: date
+    products: list[UserDayProductCreationDTO]
+
+    @field_validator("products", mode="before")
+    @classmethod
+    def validate_products(cls, v):
+        if len(v) == 0:
+            raise ValueError("Products list must not be empty")
+        return v
+
+
+class DayProductCreationDTO(BaseModel):
+    day_id: UUID
+    product_id: UUID
+    weight: int

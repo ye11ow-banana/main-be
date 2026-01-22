@@ -6,7 +6,7 @@ ITEMS_SCHEMA = {
             "items": {
                 "type": "object",
                 "properties": {
-                    "user": {"type": "string", "enum": ["Mykhailo", "Anastasiia"]},
+                    "user": {"type": "string", "enum": ["ye11ow_banana", "kaminchyk"]},
                     "raw_name": {"type": "string"},
                     "weight": {"type": "string"},
                 },

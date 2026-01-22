@@ -9,6 +9,7 @@ from auth.exceptions import AuthenticationException
 from auth.models import UserInfoDTO
 from auth.services.authentication import JWTAuthenticationService
 from auth.services.registration import RegistrationService
+from auth.services.user import UserService
 from calorie.services.day import DayService
 from calorie.services.product import ProductService
 from calorie.services.trend import TrendService
@@ -21,6 +22,7 @@ JWTAuthenticationDep = Annotated[
 RegistrationDep = Annotated[
     RegistrationService, Depends(Provide[Container.registration_service])
 ]
+UserServiceDep = Annotated[UserService, Depends(Provide[Container.user_service])]
 EmailNotificationDep = Annotated[
     EmailNotificationService, Depends(Provide[Container.notification_service])
 ]

@@ -35,3 +35,9 @@ class UserRepository(SQLAlchemyRepository):
         )
         user = (await self._session.execute(stmt)).scalar_one_or_none()
         return UserInDBDTO.model_validate(user)
+
+    async def get_all_verified(
+        self, /, returns: Sequence[str] | None = None, **data: str | int | UUID
+    ) -> list[UserInDBDTO]:
+        users = await self.get_all(returns=returns, **data | {"is_verified": True})
+        return [UserInDBDTO.model_validate(user) for user in users]

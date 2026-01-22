@@ -1,7 +1,9 @@
+from datetime import date, datetime, timedelta
 from decimal import Decimal
 from uuid import UUID
 
 from sqlalchemy import case, func, select
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import selectinload
 
@@ -9,6 +11,7 @@ from calorie import orm
 from calorie.models import (
     DayFullInfoDTO,
     DayInDBDTO,
+    DayProductCreationDTO,
     DaysFilterDTO,
     DaysFilterSortByEnum,
     OpenAIProductCreationDTO,
@@ -101,6 +104,7 @@ class DayRepository(SQLAlchemyRepository):
             .where(self.model.user_id == user_id)
             .where(self.model.created_at >= start_dt)
             .where(self.model.created_at < end_dt_exclusive)
+            .where(self.model.body_weight.isnot(None))
             .order_by(self.model.created_at)
         )
         days = (await self._session.execute(query)).all()
@@ -132,6 +136,24 @@ class DayRepository(SQLAlchemyRepository):
             )
             for day in days
         ]
+
+    async def get_by_date(self, date_: date, **data: str | int | UUID) -> DayInDBDTO:
+        start = datetime.combine(date_, datetime.min.time())
+        end = start + timedelta(days=1)
+        query = (
+            select(self.model)
+            .where(self.model.created_at >= start)
+            .where(self.model.created_at < end)
+            .filter_by(**data)
+        )
+        response = await self._session.execute(query)
+        return DayInDBDTO.model_validate(response.scalar_one())
+
+    async def add(self, **insert_data) -> DayInDBDTO:
+        new_model_object = self.model(**insert_data)
+        self._session.add(new_model_object)
+        await self._session.flush()
+        return DayInDBDTO.model_validate(new_model_object)
 
     @staticmethod
     def _calculate_total_calories(day: orm.Day) -> Decimal:
@@ -223,3 +245,26 @@ class ProductRepository(SQLAlchemyRepository):
         if q:
             query = query.where(self.model.name.ilike(f"%{q}%"))
         return (await self._session.execute(query)).scalar()
+
+
+class DayProductRepository(SQLAlchemyRepository):
+    model = orm.DayProduct
+
+    async def bulk_add_to_day(
+        self, products: list[DayProductCreationDTO], day_id: UUID
+    ) -> None:
+        data = [product.model_dump() | {"day_id": day_id} for product in products]
+        await self.bulk_add(data)
+
+    async def bulk_upsert(self, products: list[DayProductCreationDTO]) -> None:
+        items = [product.model_dump() for product in products]
+        stmt = insert(self.model).values(items)
+
+        excluded = stmt.excluded
+
+        upsert_stmt = stmt.on_conflict_do_update(
+            index_elements=[self.model.day_id, self.model.product_id],
+            set_={"weight": self.model.weight + excluded.weight},
+        )
+
+        await self._session.execute(upsert_stmt)

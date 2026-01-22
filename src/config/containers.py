@@ -7,6 +7,7 @@ from sqlalchemy.orm import sessionmaker
 from app.services import AppService
 from auth.services.authentication import JWTAuthenticationService
 from auth.services.registration import RegistrationService
+from auth.services.user import UserService
 from calorie.openai_client.client import CalorieOpenAIClient
 from calorie.services.day import DayService
 from calorie.services.product import ProductService
@@ -43,6 +44,7 @@ class Container(containers.DeclarativeContainer):
     calorie_openai_client = providers.Factory(CalorieOpenAIClient, client=openai_client)
     jwt_authentication_service = providers.Factory(JWTAuthenticationService, uow=uow)
     registration_service = providers.Factory(RegistrationService, uow=uow)
+    user_service = providers.Factory(UserService, uow=uow)
     notification_service = providers.Factory(EmailNotificationService, uow=uow)
     app_service = providers.Factory(AppService, uow=uow)
     trend_service = providers.Factory(TrendService, uow=uow)
