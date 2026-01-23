@@ -19,6 +19,8 @@ dependencies = [
     "argon2-cffi>=25.1.0",
     "openai>=2.14.0",
     "python-multipart>=0.0.21",
+    "boto3>=1.42.32",
+    "boto3-stubs>=1.42.32",
 ]
 
 [dependency-groups]

@@ -138,6 +138,13 @@ class OpenAIProductCreationDTO(BaseModel):
     confidence: Decimal
     assumptions: str
 
+    @field_validator("name_ua", mode="before")
+    @classmethod
+    def capitalize_name_ua(cls, v):
+        if isinstance(v, str):
+            return v.capitalize()
+        return v
+
 
 class OpenAIProductCreationListResponseDTO(BaseModel):
     products: list[OpenAIProductCreationDTO]

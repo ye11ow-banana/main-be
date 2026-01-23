@@ -33,7 +33,7 @@ class ProductService:
                 )
             except IntegrityError:
                 raise ValueError("Error while product update")
-        await self._uow.commit()
+            await self._uow.commit()
 
     async def create_product(self, data: ProductCreationDTO) -> UUID:
         async with self._uow:

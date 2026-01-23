@@ -36,6 +36,11 @@ class OpenAISettings(BaseModel):
     model_text: str = ""
 
 
+class S3Settings(BaseModel):
+    region: str = "eu-central-1"
+    avatar_bucket: str = ""
+
+
 class Settings(BaseSettings):
     secret_key: str = "secret"
 
@@ -44,6 +49,7 @@ class Settings(BaseSettings):
     email: EmailSettings = EmailSettings()
     tz: TZSettings = TZSettings()
     openai: OpenAISettings = OpenAISettings()
+    s3: S3Settings = S3Settings()
 
     model_config = SettingsConfigDict(
         env_file=".env",
