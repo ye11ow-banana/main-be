@@ -9,6 +9,7 @@ from auth.exceptions import AuthenticationException
 from auth.models import UserInfoDTO
 from auth.services.authentication import JWTAuthenticationService
 from auth.services.registration import RegistrationService
+from auth.services.uploader import AvatarUploader
 from auth.services.user import UserService
 from calorie.services.day import DayService
 from calorie.services.product import ProductService
@@ -70,4 +71,7 @@ TrendServiceDep = Annotated[TrendService, Depends(Provide[Container.trend_servic
 DayServiceDep = Annotated[DayService, Depends(Provide[Container.day_service])]
 ProductServiceDep = Annotated[
     ProductService, Depends(Provide[Container.product_service])
+]
+AvatarUploaderDep = Annotated[
+    AvatarUploader, Depends(Provide[Container.avatar_uploader])
 ]

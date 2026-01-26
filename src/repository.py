@@ -131,7 +131,7 @@ class SQLAlchemyRepository(IRepository):
         self,
         /,
         what_to_update: dict[str, str | int | UUID],
-        **data: str | int | UUID | datetime,
+        **data: str | int | UUID | datetime | None,
     ) -> None:
         stmt = update(self.model).filter_by(**what_to_update).values(**data)
         await self._session.execute(stmt)

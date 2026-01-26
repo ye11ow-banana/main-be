@@ -1,8 +1,9 @@
 from dependency_injector.wiring import inject
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, File, HTTPException, UploadFile, status
 
 from auth.exceptions import (
     AuthenticationException,
+    InvalidFileExtensionException,
     RegistrationException,
     WrongEmailVerificationCodeException,
 )
@@ -17,6 +18,7 @@ from auth.models import (
 from config.dependencies import (
     ActiveUserDep,
     AuthenticatedUserDep,
+    AvatarUploaderDep,
     EmailNotificationDep,
     JWTAuthenticationDep,
     RegistrationDep,
@@ -122,3 +124,40 @@ async def get_users(
 ) -> ResponseDTO[UserInfoDTO]:
     users = await user_service.get_users()
     return ResponseDTO[UserInfoDTO](data=users)
+
+
+@router.post("/avatar")
+@inject
+async def upload_avatar(
+    user: ActiveUserDep,
+    uploader: AvatarUploaderDep,
+    avatar: UploadFile = File(...),
+) -> ResponseDTO[SuccessDTO]:
+    if avatar.content_type not in {"image/png", "image/jpeg", "image/webp"}:
+        raise HTTPException(
+            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            detail="Unsupported avatar type",
+        )
+
+    content = await avatar.read()
+    if not content:
+        raise HTTPException(status_code=400, detail="Empty file")
+
+    try:
+        await uploader.upload(user.id, content)
+    except InvalidFileExtensionException:
+        raise HTTPException(
+            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            detail="Unsupported avatar type",
+        )
+
+    return ResponseDTO[SuccessDTO](data=SuccessDTO())
+
+
+@router.delete("/avatar")
+@inject
+async def delete_avatar(
+    user: ActiveUserDep, uploader: AvatarUploaderDep
+) -> ResponseDTO[SuccessDTO]:
+    await uploader.delete(user.id)
+    return ResponseDTO[SuccessDTO](data=SuccessDTO())

@@ -24,6 +24,7 @@ class UserInfoDTO(BaseModel):
     username: str
     email: str
     is_verified: bool
+    avatar_url: str | None = None
     created_at: datetime
 
 
@@ -35,6 +36,7 @@ class UserInDBDTO(BaseModel):
     email: str | None = None
     created_at: datetime | None = None
     is_verified: bool | None = None
+    avatar_url: str | None = None
     hashed_password: str | None = None
 
     def to_user_info(self) -> UserInfoDTO:

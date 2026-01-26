@@ -12,7 +12,7 @@ class UserRepository(SQLAlchemyRepository):
     model = orm.User
 
     async def get(
-        self, /, returns: Sequence[str] | None = None, **data: str | int
+        self, /, returns: Sequence[str] | None = None, **data: str | int | UUID
     ) -> UserInDBDTO:
         user = await super().get(returns=returns, **data)
         return UserInDBDTO.model_validate(user)

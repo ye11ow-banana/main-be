@@ -37,7 +37,7 @@ class OpenAISettings(BaseModel):
 
 
 class S3Settings(BaseModel):
-    region: str = "eu-central-1"
+    region: str = "eu-north-1"
     avatar_bucket: str = ""
 
 
@@ -55,6 +55,7 @@ class Settings(BaseSettings):
         env_file=".env",
         env_file_encoding="utf-8",
         env_nested_delimiter="__",
+        extra="ignore",
     )
 
 

@@ -20,6 +20,7 @@ class User(Base):
     email: Mapped[str] = mapped_column(unique=True, nullable=False)
     hashed_password: Mapped[str] = mapped_column(String(length=1024), nullable=False)
     is_verified: Mapped[bool] = mapped_column(default=False, nullable=False)
+    avatar_url: Mapped[str | None] = mapped_column(nullable=True)
     created_at: Mapped[created_at]
 
     verification_code: Mapped["VerificationCode"] = relationship(
