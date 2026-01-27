@@ -1,0 +1,31 @@
+name: Rollback Backend
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: "Image tag to deploy (commit SHA)"
+        required: true
+
+jobs:
+  rollback:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Rollback on droplet
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DO_HOST }}
+          username: ${{ secrets.DO_USER }}
+          key: ${{ secrets.DO_SSH_KEY }}
+          script: |
+            set -e
+            cd /opt/cube/backend
+
+            IMAGE=ghcr.io/${{ github.repository }}
+            TAG="${{ inputs.image_tag }}"
+
+            docker pull $IMAGE:$TAG
+            docker tag  $IMAGE:$TAG $IMAGE:latest
+
+            docker compose -f compose.yml -f compose.prod.yml up -d
+            docker compose -f compose.yml -f compose.prod.yml exec -T fastapi alembic upgrade head
