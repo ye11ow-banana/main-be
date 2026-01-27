@@ -21,6 +21,15 @@ class Day(Base):
     body_weight: Mapped[Decimal] = mapped_column(nullable=True)
     body_fat: Mapped[Decimal] = mapped_column(nullable=True)
     trend: Mapped[Decimal] = mapped_column(nullable=True)  # weight trend
+    total_proteins: Mapped[Decimal] = mapped_column(
+        nullable=False, default=Decimal("0.0")
+    )
+    total_fats: Mapped[Decimal] = mapped_column(nullable=False, default=Decimal("0.0"))
+    total_carbs: Mapped[Decimal] = mapped_column(nullable=False, default=Decimal("0.0"))
+    total_calories: Mapped[Decimal] = mapped_column(
+        nullable=False, default=Decimal("0.0")
+    )
+    additional_calories: Mapped[Decimal] = mapped_column(nullable=False, default=0)
     created_at: Mapped[created_at]
     updated_at: Mapped[updated_at]
 
