@@ -196,15 +196,8 @@ class UserDayProductCreationDTO(BaseModel):
 
 class DayCreationDTO(BaseModel):
     date: date
-    additional_calories: Decimal = Decimal("0.0")
+    user_additional_calories: dict[UUID, Decimal]  # user_id -> additional_calories
     products: list[UserDayProductCreationDTO]
-
-    @field_validator("products", mode="before")
-    @classmethod
-    def validate_products(cls, v):
-        if len(v) == 0:
-            raise ValueError("Products list must not be empty")
-        return v
 
 
 class DayProductCreationDTO(BaseModel):
