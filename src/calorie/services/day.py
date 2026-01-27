@@ -45,10 +45,12 @@ class DayService:
             days = await self._uow.days.get_full_paginated_info(
                 user_id, pagination, days_filter
             )
-        self._calculate_totals(days)
+            count = await self._uow.days.count_in_date_range(
+                user_id, days_filter.to_date_range()
+            )
         return PaginationDTO(
-            page_count=pagination.get_page_count(len(days)),
-            total_count=len(days),
+            page_count=pagination.get_page_count(count),
+            total_count=count,
             data=days,
         )
 
@@ -162,12 +164,3 @@ class DayService:
     @staticmethod
     def _normalize_raw_name(raw_name: str) -> str:
         return raw_name.strip().lower()
-
-    @staticmethod
-    def _calculate_totals(days: list[DayFullInfoDTO]) -> None:
-        for day in days:
-            for product in day.products:
-                day.total_proteins += product.proteins
-                day.total_fats += product.fats
-                day.total_carbs += product.carbs
-                day.total_calories += product.calories

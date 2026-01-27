@@ -32,6 +32,11 @@ class DayInDBDTO(BaseModel):
     body_weight: Decimal | None = None
     body_fat: Decimal | None = None
     trend: Decimal | None = None
+    total_proteins: Decimal = Decimal("0.0")
+    total_fats: Decimal = Decimal("0.0")
+    total_carbs: Decimal = Decimal("0.0")
+    total_calories: Decimal = Decimal("0.0")
+    additional_calories: Decimal = Decimal("0.0")
     created_at: datetime | None = None
     updated_at: datetime | None = None
     user_id: UUID | None = None
@@ -94,6 +99,7 @@ class DayFullInfoDTO(BaseModel):
     total_fats: Decimal = Decimal("0.0")
     total_carbs: Decimal = Decimal("0.0")
     total_calories: Decimal = Decimal("0.0")
+    additional_calories: Decimal = Decimal("0.0")
     products: list[DayProductDTO] = Field(validation_alias="day_products")
 
 
@@ -190,6 +196,7 @@ class UserDayProductCreationDTO(BaseModel):
 
 class DayCreationDTO(BaseModel):
     date: date
+    additional_calories: Decimal = Decimal("0.0")
     products: list[UserDayProductCreationDTO]
 
     @field_validator("products", mode="before")
@@ -201,6 +208,6 @@ class DayCreationDTO(BaseModel):
 
 
 class DayProductCreationDTO(BaseModel):
-    day_id: UUID
+    day_id: UUID | None
     product_id: UUID
     weight: int

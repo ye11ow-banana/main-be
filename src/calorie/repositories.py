@@ -30,22 +30,8 @@ class DayRepository(SQLAlchemyRepository):
     async def get_full_paginated_info(
         self, user_id: UUID, pagination: Pagination, days_filter: DaysFilterDTO
     ) -> list[DayFullInfoDTO]:
-        day_total_calories = (
-            select(
-                orm.DayProduct.day_id.label("day_id"),
-                func.coalesce(
-                    func.sum(orm.DayProduct.weight * orm.Product.calories / 100),
-                    0,
-                ).label("total_calories"),
-            )
-            .join(orm.Product, orm.Product.id == orm.DayProduct.product_id)
-            .group_by(orm.DayProduct.day_id)
-            .subquery("day_total_calories")
-        )
-
         query = (
             select(self.model)
-            .outerjoin(day_total_calories, day_total_calories.c.day_id == self.model.id)
             .options(
                 selectinload(self.model.day_products).selectinload(
                     orm.DayProduct.product
@@ -61,7 +47,7 @@ class DayRepository(SQLAlchemyRepository):
         elif days_filter.sort_by == DaysFilterSortByEnum.LOWEST_WEIGHT:
             query = query.order_by(self.model.body_weight.asc())
         else:
-            query = query.order_by(day_total_calories.c.total_calories.desc())
+            query = query.order_by(self.model.total_calories.desc())
 
         start_dt, end_dt_exclusive = (
             days_filter.to_date_range().format_to_exclusive_range()
@@ -73,6 +59,16 @@ class DayRepository(SQLAlchemyRepository):
         response = await self._session.execute(query)
         results = response.scalars().unique().all()
         return [DayFullInfoDTO.model_validate(result) for result in results]
+
+    async def count_in_date_range(self, user_id: UUID, date_range: DateRangeDTO) -> int:
+        start_dt, end_dt_exclusive = date_range.format_to_exclusive_range()
+        query = (
+            select(func.count())
+            .where(self.model.user_id == user_id)
+            .where(self.model.created_at >= start_dt)
+            .where(self.model.created_at < end_dt_exclusive)
+        )
+        return (await self._session.execute(query)).scalar()
 
     async def get_first_and_last(
         self, /, **data: str | int | UUID
@@ -119,11 +115,6 @@ class DayRepository(SQLAlchemyRepository):
         start_dt, end_dt_exclusive = date_range.format_to_exclusive_range()
         query = (
             select(self.model)
-            .options(
-                selectinload(self.model.day_products).selectinload(
-                    orm.DayProduct.product
-                )
-            )
             .where(self.model.user_id == user_id)
             .where(self.model.created_at >= start_dt)
             .where(self.model.created_at < end_dt_exclusive)
@@ -131,9 +122,7 @@ class DayRepository(SQLAlchemyRepository):
         )
         days = (await self._session.execute(query)).scalars().all()
         return [
-            TrendItemDTO(
-                date=day.created_at.date(), value=self._calculate_total_calories(day)
-            )
+            TrendItemDTO(date=day.created_at.date(), value=day.total_calories)
             for day in days
         ]
 
@@ -155,18 +144,14 @@ class DayRepository(SQLAlchemyRepository):
         await self._session.flush()
         return DayInDBDTO.model_validate(new_model_object)
 
-    @staticmethod
-    def _calculate_total_calories(day: orm.Day) -> Decimal:
-        total = Decimal("0")
-        for day_product in day.day_products:
-            total += (
-                day_product.product.calories / Decimal("100")
-            ) * day_product.weight
-        return total
-
 
 class ProductRepository(SQLAlchemyRepository):
     model = orm.Product
+
+    async def get_by_ids(self, id_list: list[UUID]) -> list[ProductDTO]:
+        query = select(self.model).where(self.model.id.in_(id_list))
+        response = await self._session.execute(query)
+        return [ProductDTO.model_validate(row) for row in response.scalars()]
 
     async def find_by_raw_name(
         self,
