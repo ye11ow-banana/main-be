@@ -1,6 +1,7 @@
 from datetime import datetime
 from pathlib import Path
 
+from aiosmtplib import SMTPReadTimeoutError
 from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
 from pydantic import NameEmail
 
@@ -24,17 +25,22 @@ fm = FastMail(conf)
 
 
 class EmailNotificationService(INotificationService):
-    async def send_verification_code(self, user: UserInfoDTO) -> None:
-        code = await self.create_verification_code(user.id)
-        message = MessageSchema(
-            subject="Confirm your email",
-            recipients=[NameEmail(name=user.username, email=user.email)],
-            template_body={
-                "username": user.username,
-                "email": user.email,
-                "verification_code": code,
-                "year": datetime.now().year,
-            },
-            subtype=MessageType.html,
-        )
-        await fm.send_message(message, template_name="email-verification.html")
+    @staticmethod
+    async def send_verification_code(user: UserInfoDTO, code: int) -> None:
+        try:
+            message = MessageSchema(
+                subject="Confirm your email",
+                recipients=[NameEmail(name=user.username, email=user.email)],
+                template_body={
+                    "username": user.username,
+                    "email": user.email,
+                    "verification_code": code,
+                    "year": datetime.now().year,
+                },
+                subtype=MessageType.html,
+            )
+            await fm.send_message(message, template_name="email-verification.html")
+        except SMTPReadTimeoutError:
+            pass
+        except Exception:
+            pass

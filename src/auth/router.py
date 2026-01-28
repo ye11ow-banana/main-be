@@ -1,5 +1,5 @@
 from dependency_injector.wiring import inject
-from fastapi import APIRouter, File, HTTPException, UploadFile, status
+from fastapi import APIRouter, BackgroundTasks, File, HTTPException, UploadFile, status
 
 from auth.exceptions import (
     AuthenticationException,
@@ -87,15 +87,17 @@ async def sign_up(
 async def send_email_verification_code(
     user: AuthenticatedUserDep,
     notification_service: EmailNotificationDep,
+    background_tasks: BackgroundTasks,
 ) -> ResponseDTO[SuccessDTO]:
     if user.is_verified:
         raise HTTPException(
             status.HTTP_400_BAD_REQUEST, detail="User is already verified"
         )
     try:
-        await notification_service.send_verification_code(user)
+        code = await notification_service.create_verification_code(user.id)
     except RegistrationException as e:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, detail=str(e))
+    background_tasks.add_task(notification_service.send_verification_code, user, code)
     return ResponseDTO[SuccessDTO](data=SuccessDTO())
 
 
