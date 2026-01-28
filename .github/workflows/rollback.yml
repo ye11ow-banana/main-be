@@ -27,6 +27,8 @@ jobs:
             docker pull $IMAGE:$TAG
             docker tag  $IMAGE:$TAG $IMAGE:latest
 
+            sudo systemctl disable --now caddy 2>/dev/null || true
+
             docker compose -f compose.yml -f compose.prod.yml up -d
             docker compose -f compose.yml -f compose.prod.yml exec -T fastapi alembic upgrade head
 

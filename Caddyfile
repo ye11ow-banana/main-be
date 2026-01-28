@@ -1,0 +1,9 @@
+icu-be.com, www.icu-be.com {
+  handle_path /api/* {
+    reverse_proxy fastapi:8000
+  }
+
+  root * /srv/frontend
+  try_files {path} /index.html
+  file_server
+}

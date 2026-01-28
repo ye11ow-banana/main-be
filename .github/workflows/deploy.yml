@@ -47,13 +47,13 @@ jobs:
           docker push $IMAGE:latest
           docker push $IMAGE:${{ github.sha }}
 
-      - name: Sync infra files to server (compose + nginx)
+      - name: Sync infra files to server (compose + caddy)
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.DO_HOST }}
           username: ${{ secrets.DO_USER }}
           key: ${{ secrets.DO_SSH_KEY }}
-          source: "compose.yml,compose.prod.yml,nginx/default.conf"
+          source: "compose.yml,compose.prod.yml,Caddyfile"
           target: "/opt/cube/backend"
 
       - name: Deploy on droplet
@@ -74,6 +74,8 @@ jobs:
             IMAGE=ghcr.io/${{ github.repository }}
             docker pull $IMAGE:${{ github.sha }}
             docker tag $IMAGE:${{ github.sha }} $IMAGE:latest
+
+            sudo systemctl disable --now caddy 2>/dev/null || true
 
             docker compose -f compose.yml -f compose.prod.yml up -d
             docker compose -f compose.yml -f compose.prod.yml exec -T fastapi alembic upgrade head

@@ -1,6 +1,7 @@
 services:
   postgres:
-    ports: []
+    ports:
+      - "5432:5432"
 
   fastapi:
     image: ghcr.io/ye11ow-banana/main-be:latest
@@ -14,12 +15,29 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
-    ports:
-      - "127.0.0.1:8000:8000"
+    ports: []
     command: ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: main-be-caddy
+    depends_on:
+      - fastapi
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - /opt/cube/frontend/dist:/srv/frontend:ro
+      - caddy_data:/data
+      - caddy_config:/config
 
   develop:
     profiles: ["dev"]
 
   mailpit:
     profiles: ["dev"]
+
+volumes:
+  caddy_data:
+  caddy_config:
