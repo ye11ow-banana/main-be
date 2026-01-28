@@ -16,7 +16,7 @@ conf = ConnectionConfig(
     MAIL_SERVER=settings.email.smtp_server,
     MAIL_STARTTLS=settings.email.smtp_starttls,
     MAIL_SSL_TLS=settings.email.smtp_ssl_tls,
-    USE_CREDENTIALS=False,
+    USE_CREDENTIALS=settings.email.use_credentials,
     TEMPLATE_FOLDER=Path("/app/templates"),
 )
 

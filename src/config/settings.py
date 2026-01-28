@@ -24,6 +24,7 @@ class EmailSettings(BaseModel):
     smtp_server: str = "mailpit"
     smtp_starttls: bool = False
     smtp_ssl_tls: bool = False
+    use_credentials: bool = False
 
 
 class TZSettings(BaseModel):
