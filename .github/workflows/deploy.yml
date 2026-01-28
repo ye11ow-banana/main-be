@@ -77,3 +77,7 @@ jobs:
 
             docker compose -f compose.yml -f compose.prod.yml up -d
             docker compose -f compose.yml -f compose.prod.yml exec -T fastapi alembic upgrade head
+
+            docker image prune -a -f
+            docker builder prune -a -f
+            docker container prune -f
