@@ -1,9 +1,14 @@
 icu-be.com, www.icu-be.com {
-  handle_path /api/* {
+
+  @api path /api/*
+  handle @api {
+    uri strip_prefix /api
     reverse_proxy fastapi:8000
   }
 
-  root * /srv/frontend
-  try_files {path} /index.html
-  file_server
+  handle {
+    root * /srv/frontend
+    try_files {path} /index.html
+    file_server
+  }
 }
