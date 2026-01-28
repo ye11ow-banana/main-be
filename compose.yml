@@ -18,9 +18,11 @@ services:
     image: postgres:16-alpine
     container_name: main-be-postgres
     environment:
-      POSTGRES_DB: main_be
-      POSTGRES_USER: main_be
-      POSTGRES_PASSWORD: main_be_password
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    env_file:
+      - .env
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
