@@ -79,10 +79,10 @@ class DayProductDTO(BaseModel):
                 "id": p.id,
                 "name": p.name,
                 "weight": obj.weight,
-                "proteins": p.proteins,
-                "fats": p.fats,
-                "carbs": p.carbs,
-                "calories": p.calories,
+                "proteins": p.proteins * obj.weight / 100,
+                "fats": p.fats * obj.weight / 100,
+                "carbs": p.carbs * obj.weight / 100,
+                "calories": p.calories * obj.weight / 100,
             }
         return obj
 
