@@ -6,6 +6,7 @@ from sqlalchemy.exc import NoResultFound
 
 from calorie.models import (
     DayFullInfoDTO,
+    DayMeasurementUpdateDTO,
     DaysFilterDTO,
     IngestResponseDTO,
     OpenAIProductCreationDTO,
@@ -23,6 +24,11 @@ class DayService:
     def __init__(self, uow: IUnitOfWork, calorie_openai_client: CalorieOpenAIClient):
         self._uow = uow
         self._calorie_openai_client = calorie_openai_client
+
+    async def update_day(self, day_id: UUID, data: DayMeasurementUpdateDTO) -> None:
+        async with self._uow:
+            await self._uow.days.update({"id": day_id}, **data.model_dump())
+            await self._uow.commit()
 
     async def get_date_range(self, user_id: UUID) -> DateRangeDTO:
         async with self._uow:

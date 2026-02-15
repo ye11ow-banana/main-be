@@ -118,6 +118,7 @@ class DayRepository(SQLAlchemyRepository):
             .where(self.model.user_id == user_id)
             .where(self.model.created_at >= start_dt)
             .where(self.model.created_at < end_dt_exclusive)
+            .where(self.model.total_calories > 0)
             .order_by(self.model.created_at)
         )
         days = (await self._session.execute(query)).scalars().all()

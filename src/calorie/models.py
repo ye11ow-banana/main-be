@@ -87,6 +87,20 @@ class DayProductDTO(BaseModel):
         return obj
 
 
+class DayMeasurementUpdateDTO(BaseModel):
+    body_weight: Decimal | None = None
+    body_fat: Decimal | None = None
+
+    @field_validator("body_weight", "body_fat")
+    @classmethod
+    def bigger_than_zero(cls, v: Decimal | None):
+        if v is None:
+            return v
+        if v <= 0:
+            raise ValueError("must be bigger than zero")
+        return v
+
+
 class DayFullInfoDTO(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

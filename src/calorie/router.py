@@ -6,6 +6,7 @@ from fastapi import APIRouter, File, Form, HTTPException, Query, UploadFile, sta
 from calorie.models import (
     DayCreationDTO,
     DayFullInfoDTO,
+    DayMeasurementUpdateDTO,
     DaysFilterDTO,
     DaysFilterSortByEnum,
     IngestResponseDTO,
@@ -74,6 +75,18 @@ async def get_days(
     pagination = Pagination(page=days_filter.page)
     days = await day_service.get_paginated_days(user.id, pagination, days_filter)
     return ResponseDTO[PaginationDTO[DayFullInfoDTO]](data=days)
+
+
+@router.patch("/days/{day_id}")
+@inject
+async def update_day_measurements(
+    _: ActiveUserDep,
+    day_service: DayServiceDep,
+    day_id: UUID,
+    data: DayMeasurementUpdateDTO,
+) -> ResponseDTO[SuccessDTO]:
+    await day_service.update_day(day_id, data)
+    return ResponseDTO[SuccessDTO](data=SuccessDTO())
 
 
 @router.get("/sort_bys")
