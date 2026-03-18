@@ -1,14 +1,18 @@
+import logging
 import sys
 
+import sentry_sdk
 from fastapi import FastAPI, Request, status
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import HTTPException, RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from sentry_sdk.integrations.logging import LoggingIntegration
 
 import app.router as app_router_module
 import auth.router as auth_router_module
 import calorie.router as calorie_router_module
+from config import settings
 from config.containers import Container
 from models import (
     ErrorResponseDTO,
@@ -24,6 +28,18 @@ app = FastAPI(
         422: {"model": ErrorResponseDTO[PydanticErrorResponseDTO]},
     },
 )
+
+if settings.production:
+    sentry_sdk.init(
+        dsn=settings.sentry_dsn,
+        integrations=[
+            LoggingIntegration(
+                level=logging.INFO,
+                event_level=logging.ERROR,
+            )
+        ],
+        enable_logs=True,
+    )
 
 container = Container()
 container.wire(

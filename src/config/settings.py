@@ -51,6 +51,8 @@ class Settings(BaseSettings):
     tz: TZSettings = TZSettings()
     openai: OpenAISettings = OpenAISettings()
     s3: S3Settings = S3Settings()
+    sentry_dsn: str = ""
+    production: bool = False
 
     model_config = SettingsConfigDict(
         env_file=".env",
