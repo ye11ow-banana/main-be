@@ -114,6 +114,7 @@ class DayFullInfoDTO(BaseModel):
     total_carbs: Decimal = Decimal("0.0")
     total_calories: Decimal = Decimal("0.0")
     additional_calories: Decimal = Decimal("0.0")
+    user_body_weight: dict[UUID, Decimal] = {}
     products: list[DayProductDTO] = Field(validation_alias="day_products")
 
 
@@ -211,6 +212,8 @@ class UserDayProductCreationDTO(BaseModel):
 class DayCreationDTO(BaseModel):
     date: date
     user_additional_calories: dict[UUID, Decimal]  # user_id -> additional_calories
+    user_body_weight: dict[UUID, Decimal]  # user_id -> body_weight
+    all_body_weights: dict[UUID, Decimal | None] = Field(default_factory=dict)
     products: list[UserDayProductCreationDTO]
 
 
