@@ -1,8 +1,9 @@
 from datetime import date, datetime, timedelta
 from decimal import Decimal
 from uuid import UUID
+from collections import defaultdict
 
-from sqlalchemy import case, func, select
+from sqlalchemy import case, func, select, update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import selectinload
@@ -126,6 +127,43 @@ class DayRepository(SQLAlchemyRepository):
             TrendItemDTO(date=day.created_at.date(), value=day.total_calories)
             for day in days
         ]
+
+    async def recalculate_weight_trends(self, user_id: UUID) -> None:
+        await self._session.execute(
+            update(self.model)
+            .where(self.model.user_id == user_id)
+            .values(trend=None)
+        )
+
+        result = await self._session.execute(
+            select(self.model)
+            .where(self.model.user_id == user_id)
+            .where(self.model.body_weight.isnot(None))
+            .order_by(self.model.created_at.asc())
+        )
+        days = result.scalars().all()
+
+        if not days:
+            return
+
+        prev_weight = None
+
+        for day in days:
+            if prev_weight is not None:
+                day.trend = day.body_weight - prev_weight
+
+            prev_weight = day.body_weight
+
+    async def get_all_by_date(self, date_: date) -> list[DayInDBDTO]:
+        start = datetime.combine(date_, datetime.min.time())
+        end = start + timedelta(days=1)
+        query = (
+            select(self.model)
+            .where(self.model.created_at >= start)
+            .where(self.model.created_at < end)
+        )
+        response = await self._session.execute(query)
+        return [DayInDBDTO.model_validate(row) for row in response.scalars()]
 
     async def get_by_date(self, date_: date, **data: str | int | UUID) -> DayInDBDTO:
         start = datetime.combine(date_, datetime.min.time())

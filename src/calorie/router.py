@@ -2,6 +2,8 @@ from uuid import UUID
 
 from dependency_injector.wiring import inject
 from fastapi import APIRouter, File, Form, HTTPException, Query, UploadFile, status
+from datetime import date
+from decimal import Decimal
 
 from calorie.models import (
     DayCreationDTO,
@@ -76,16 +78,25 @@ async def get_days(
     days = await day_service.get_paginated_days(user.id, pagination, days_filter)
     return ResponseDTO[PaginationDTO[DayFullInfoDTO]](data=days)
 
+@router.get("/weight/by-date")
+@inject
+async def get_body_weights_by_date(
+    _: ActiveUserDep,
+    day_service: DayServiceDep,
+    date: date,
+) -> ResponseDTO[dict[UUID, Decimal | None]]:
+    result = await day_service.get_body_weights_by_date(date)
+    return ResponseDTO[dict[UUID, Decimal | None]](data=result)
 
 @router.patch("/days/{day_id}")
 @inject
 async def update_day_measurements(
-    _: ActiveUserDep,
+    user: ActiveUserDep,
     day_service: DayServiceDep,
     day_id: UUID,
     data: DayMeasurementUpdateDTO,
 ) -> ResponseDTO[SuccessDTO]:
-    await day_service.update_day(day_id, data)
+    await day_service.update_day(user.id, day_id, data)
     return ResponseDTO[SuccessDTO](data=SuccessDTO())
 
 
