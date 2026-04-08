@@ -3,7 +3,7 @@ from decimal import Decimal
 from enum import StrEnum
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator, RootModel
 
 from models import DateRangeDTO
 
@@ -28,7 +28,7 @@ class TrendItemDTO(BaseModel):
 class DayInDBDTO(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    id: UUID | None = None
+    id: UUID
     body_weight: Decimal | None = None
     body_fat: Decimal | None = None
     trend: Decimal | None = None
@@ -37,10 +37,9 @@ class DayInDBDTO(BaseModel):
     total_carbs: Decimal = Decimal("0.0")
     total_calories: Decimal = Decimal("0.0")
     additional_calories: Decimal = Decimal("0.0")
-    created_at: datetime | None = None
+    created_at: datetime
     updated_at: datetime | None = None
-    user_id: UUID | None = None
-
+    user_id: UUID
 
 class DaysFilterSortByEnum(StrEnum):
     MOST_RECENT = "most_recent"
@@ -99,6 +98,12 @@ class DayMeasurementUpdateDTO(BaseModel):
         if v <= 0:
             raise ValueError("must be bigger than zero")
         return v
+
+    @model_validator(mode="after")
+    def at_least_one_field(self):
+        if self.body_weight is None and self.body_fat is None:
+            raise ValueError("At least one field must be provided")
+        return self
 
 
 class DayFullInfoDTO(BaseModel):
@@ -221,3 +226,6 @@ class DayProductCreationDTO(BaseModel):
     day_id: UUID | None
     product_id: UUID
     weight: int
+
+class BodyWeightMapDTO(RootModel[dict[UUID, Decimal | None]]):
+    pass

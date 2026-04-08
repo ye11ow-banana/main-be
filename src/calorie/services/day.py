@@ -9,6 +9,7 @@ from calorie.models import (
     DayFullInfoDTO,
     DayMeasurementUpdateDTO,
     DaysFilterDTO,
+    BodyWeightMapDTO,
     IngestResponseDTO,
     OpenAIProductCreationDTO,
     OpenAIProductDTO,
@@ -31,13 +32,10 @@ class DayService:
 
             update_data = data.model_dump(exclude_unset=True)
 
-            if not update_data:
-                return
-
             await self._uow.days.update({"id": day_id, "user_id": user_id}, **update_data)
 
-            if "body_weight" in update_data:
-                await self._uow.days.recalculate_weight_trends(user_id)
+            if data.body_weight is not None:
+                await self._uow.days.update_weight_trend_for_day(user_id, target_date=data_date)
 
             await self._uow.commit()
 
@@ -63,8 +61,9 @@ class DayService:
     async def get_body_weights_by_date(self, date_: date) -> dict[UUID, Decimal | None]:
         async with self._uow:
             days = await self._uow.days.get_all_by_date(date_)
-            return {day.user_id: day.body_weight for day in days}
-        return None
+            return BodyWeightMapDTO({
+                day.user_id: day.body_weight for day in days
+            })
 
     async def get_paginated_days(self, user_id: UUID, pagination: Pagination, days_filter: DaysFilterDTO) -> PaginationDTO[DayFullInfoDTO]:
         async with self._uow: days = await self._uow.days.get_full_paginated_info(user_id, pagination, days_filter)

@@ -17,6 +17,7 @@ from calorie.models import (
     TrendFilterDTO,
     TrendItemDTO,
     TrendTypeEnum,
+    BodyWeightMapDTO,
 )
 from calorie.services.day_creation import DayCreationService
 from config.containers import Container
@@ -78,15 +79,22 @@ async def get_days(
     days = await day_service.get_paginated_days(user.id, pagination, days_filter)
     return ResponseDTO[PaginationDTO[DayFullInfoDTO]](data=days)
 
-@router.get("/weight/by-date")
+@router.get("/days/{target_date}/weight")
 @inject
 async def get_body_weights_by_date(
     _: ActiveUserDep,
     day_service: DayServiceDep,
-    date: date,
-) -> ResponseDTO[dict[UUID, Decimal | None]]:
-    result = await day_service.get_body_weights_by_date(date)
-    return ResponseDTO[dict[UUID, Decimal | None]](data=result)
+    target_date: date,
+) -> ResponseDTO[BodyWeightMapDTO]:
+    result = await day_service.get_body_weights_by_date(target_date)
+
+    if not result.root:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No body weights found for this date.",
+        )
+
+    return ResponseDTO(data=result)
 
 @router.patch("/days/{day_id}")
 @inject
