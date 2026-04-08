@@ -110,6 +110,11 @@ class DayRepository(SQLAlchemyRepository):
             for created_at, body_weight in days
         ]
 
+    def _date_to_range(self, date_: date) -> tuple[datetime, datetime]:
+        start = datetime.combine(date_, datetime.min.time())
+        end = start + timedelta(days=1)
+        return start, end
+
     async def get_calorie_trend(
         self, user_id: UUID, date_range: DateRangeDTO
     ) -> list[TrendItemDTO]:
@@ -128,35 +133,51 @@ class DayRepository(SQLAlchemyRepository):
             for day in days
         ]
 
-    async def recalculate_weight_trends(self, user_id: UUID) -> None:
-        await self._session.execute(
-            update(self.model)
-            .where(self.model.user_id == user_id)
-            .values(trend=None)
-        )
+    async def update_weight_trend_for_day(self, user_id: UUID, target_date: date) -> None:
+        start, end = self._date_to_range(target_date)
 
-        result = await self._session.execute(
+        current = await self._session.execute(
+            select(self.model)
+            .where(self.model.user_id == user_id)
+            .where(self.model.created_at >= start)
+            .where(self.model.created_at < end)
+        )
+        current_day = current.scalar_one_or_none()
+
+        if not current_day or current_day.body_weight is None:
+            return
+
+        prev = await self._session.execute(
             select(self.model)
             .where(self.model.user_id == user_id)
             .where(self.model.body_weight.isnot(None))
-            .order_by(self.model.created_at.asc())
+            .where(self.model.created_at < current_day.created_at)
+            .order_by(self.model.created_at.desc())
+            .limit(1)
         )
-        days = result.scalars().all()
+        prev_day = prev.scalar_one_or_none()
 
-        if not days:
-            return
+        if prev_day:
+            current_day.trend = current_day.body_weight - prev_day.body_weight
+        else:
+            current_day.trend = None
 
-        prev_weight = None
+        next_ = await self._session.execute(
+            select(self.model)
+            .where(self.model.user_id == user_id)
+            .where(self.model.body_weight.isnot(None))
+            .where(self.model.created_at > current_day.created_at)
+            .order_by(self.model.created_at.asc())
+            .limit(1)
+        )
+        next_day = next_.scalar_one_or_none()
 
-        for day in days:
-            if prev_weight is not None:
-                day.trend = day.body_weight - prev_weight
-
-            prev_weight = day.body_weight
+        if next_day:
+            next_day.trend = next_day.body_weight - current_day.body_weight
 
     async def get_all_by_date(self, date_: date) -> list[DayInDBDTO]:
-        start = datetime.combine(date_, datetime.min.time())
-        end = start + timedelta(days=1)
+        start, end = self._date_to_range(date_)
+
         query = (
             select(self.model)
             .where(self.model.created_at >= start)
@@ -166,8 +187,8 @@ class DayRepository(SQLAlchemyRepository):
         return [DayInDBDTO.model_validate(row) for row in response.scalars()]
 
     async def get_by_date(self, date_: date, **data: str | int | UUID) -> DayInDBDTO:
-        start = datetime.combine(date_, datetime.min.time())
-        end = start + timedelta(days=1)
+        start, end = self._date_to_range(date_)
+
         query = (
             select(self.model)
             .where(self.model.created_at >= start)
@@ -175,7 +196,12 @@ class DayRepository(SQLAlchemyRepository):
             .filter_by(**data)
         )
         response = await self._session.execute(query)
-        return DayInDBDTO.model_validate(response.scalar_one())
+        row = response.scalars().first()
+
+        if row is None:
+            raise NoResultFound(f"No result found for date {date_}")
+
+        return DayInDBDTO.model_validate(row)
 
     async def add(self, **insert_data) -> DayInDBDTO:
         new_model_object = self.model(**insert_data)
