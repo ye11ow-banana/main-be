@@ -11,6 +11,9 @@ from auth.models import TokenDTO, UserInDBDTO, UserInfoDTO, UserInLoginDTO
 from config import settings
 from unitofwork import IUnitOfWork
 
+from google.oauth2 import id_token
+from google.auth.transport import requests
+
 
 class IAuthenticationService(ABC):
     def __init__(self, uow: IUnitOfWork):
@@ -47,20 +50,71 @@ class JWTAuthenticationService(IAuthenticationService):
             await self._verify_password(user.password, db_user.hashed_password)
         except (NoResultFound, ValueError):
             raise AuthenticationException("Incorrect username or password")
-        access_token_expires = timedelta(
-            minutes=settings.jwt.access_token_expire_minutes
-        )
-        access_token = await self.create_access_token(
-            data={"sub": user.username}, expires_delta=access_token_expires
-        )
-        refresh_token_expires = timedelta(days=settings.jwt.refresh_token_expire_days)
-        refresh_token = await self.create_access_token(
-            data={"sub": user.username, "token_type": "refresh"},
-            expires_delta=refresh_token_expires,
-        )
-        return TokenDTO(
-            access_token=access_token, refresh_token=refresh_token, token_type="bearer"
-        )
+        return await self._issue_tokens(user.username)
+
+    # async def authenticate_google_user(self, token: str) -> TokenDTO:
+    #     try:
+    #         id_info = id_token.verify_oauth2_token(
+    #             token,
+    #             requests.Request(),
+    #             settings.google.client_id,
+    #         )
+    #     except ValueError:
+    #         raise AuthenticationException("Invalid Google token")
+    #
+    #     email = id_info.get("email")
+    #     email_verified = id_info.get("email_verified")
+    #
+    #     if not email or not email_verified:
+    #         raise AuthenticationException("Invalid Google account")
+    #
+    #     async with self._uow:
+    #         try:
+    #             user = await self._get_db_user_by_username_or_email(email)
+    #
+    #             if not user:
+    #                 raise AuthenticationException("User with this email does not exist")
+    #         except NoResultFound:
+    #             raise AuthenticationException("Account with that email does not exist")
+    #
+    #     return await self._issue_tokens(email)
+
+    async def authenticate_google_user(self, id_token: str):
+        payload = await self._verify_google_token(id_token)
+
+        email = payload.get("email")
+        if not email:
+            raise UnauthorizedException("Email not provided by Google")
+
+        user = await self._get_db_user_by_username_or_email(email)
+        if not user:
+            raise UnauthorizedException("User not found")
+
+        return self._issue_tokens(user)
+
+    async def _verify_google_token(self, id_token_str: str) -> dict:
+        try:
+            request = requests.Request()
+
+            payload = id_token.verify_oauth2_token(
+                id_token_str,
+                request,
+                audience=settings.google.client_id,
+            )
+
+            if payload["iss"] not in ["accounts.google.com", "https://accounts.google.com"]:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Invalid token issuer",
+                )
+
+            return payload
+
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid Google token",
+            )
 
     async def get_current_user(self, token: str) -> UserInfoDTO:
         try:
@@ -96,6 +150,29 @@ class JWTAuthenticationService(IAuthenticationService):
         )
         return TokenDTO(
             access_token=access_token, refresh_token=refresh_token, token_type="bearer"
+        )
+
+    async def _issue_tokens(self, subject: str) -> TokenDTO:
+        access_token_expires = timedelta(
+            minutes=settings.jwt.access_token_expire_minutes
+        )
+        access_token = await self.create_access_token(
+            data={"sub": subject},
+            expires_delta=access_token_expires,
+        )
+
+        refresh_token_expires = timedelta(
+            days=settings.jwt.refresh_token_expire_days
+        )
+        refresh_token = await self.create_access_token(
+            data={"sub": subject, "token_type": "refresh"},
+            expires_delta=refresh_token_expires,
+        )
+
+        return TokenDTO(
+            access_token=access_token,
+            refresh_token=refresh_token,
+            token_type="bearer",
         )
 
     async def _get_db_user_by_jwt(self, token: str) -> UserInDBDTO:

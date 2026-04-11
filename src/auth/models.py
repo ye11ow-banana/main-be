@@ -73,3 +73,6 @@ class UserVerificationCodeDTO(BaseModel):
 
 class RefreshTokenDTO(BaseModel):
     refresh_token: str
+
+class GoogleTokenDTO(BaseModel):
+    id_token: str
