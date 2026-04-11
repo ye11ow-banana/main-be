@@ -1,11 +1,11 @@
+from datetime import date
 from uuid import UUID
 
 from dependency_injector.wiring import inject
 from fastapi import APIRouter, File, Form, HTTPException, Query, UploadFile, status
-from datetime import date
-from decimal import Decimal
 
 from calorie.models import (
+    BodyWeightMapDTO,
     DayCreationDTO,
     DayFullInfoDTO,
     DayMeasurementUpdateDTO,
@@ -17,7 +17,6 @@ from calorie.models import (
     TrendFilterDTO,
     TrendItemDTO,
     TrendTypeEnum,
-    BodyWeightMapDTO,
 )
 from calorie.services.day_creation import DayCreationService
 from config.containers import Container
@@ -79,6 +78,7 @@ async def get_days(
     days = await day_service.get_paginated_days(user.id, pagination, days_filter)
     return ResponseDTO[PaginationDTO[DayFullInfoDTO]](data=days)
 
+
 @router.get("/days/{target_date}/weight")
 @inject
 async def get_body_weights_by_date(
@@ -86,15 +86,16 @@ async def get_body_weights_by_date(
     day_service: DayServiceDep,
     target_date: date,
 ) -> ResponseDTO[BodyWeightMapDTO]:
-    result = await day_service.get_body_weights_by_date(target_date)
+    body_weights = await day_service.get_body_weights_by_date(target_date=target_date)
 
-    if not result.root:
+    if not body_weights.root:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="No body weights found for this date.",
         )
 
-    return ResponseDTO(data=result)
+    return ResponseDTO(data=body_weights)
+
 
 @router.patch("/days/{day_id}")
 @inject

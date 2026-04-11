@@ -1,9 +1,8 @@
 from datetime import date, datetime, timedelta
 from decimal import Decimal
 from uuid import UUID
-from collections import defaultdict
 
-from sqlalchemy import case, func, select, update
+from sqlalchemy import case, func, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import selectinload
@@ -110,7 +109,8 @@ class DayRepository(SQLAlchemyRepository):
             for created_at, body_weight in days
         ]
 
-    def _date_to_range(self, date_: date) -> tuple[datetime, datetime]:
+    @staticmethod
+    def _date_to_range(date_: date) -> tuple[datetime, datetime]:
         start = datetime.combine(date_, datetime.min.time())
         end = start + timedelta(days=1)
         return start, end
@@ -133,7 +133,7 @@ class DayRepository(SQLAlchemyRepository):
             for day in days
         ]
 
-    async def update_weight_trend_for_day(self, user_id: UUID, target_date: date) -> None:
+    async def update_weight_trend(self, user_id: UUID, target_date: date) -> None:
         start, end = self._date_to_range(target_date)
 
         current = await self._session.execute(
@@ -147,18 +147,17 @@ class DayRepository(SQLAlchemyRepository):
         if not current_day or current_day.body_weight is None:
             return
 
-        prev = await self._session.execute(
+        previous = await self._session.execute(
             select(self.model)
             .where(self.model.user_id == user_id)
-            .where(self.model.body_weight.isnot(None))
             .where(self.model.created_at < current_day.created_at)
             .order_by(self.model.created_at.desc())
             .limit(1)
         )
-        prev_day = prev.scalar_one_or_none()
+        previous_day = previous.scalar_one_or_none()
 
-        if prev_day:
-            current_day.trend = current_day.body_weight - prev_day.body_weight
+        if previous_day and previous_day.body_weight is not None:
+            current_day.trend = current_day.body_weight - previous_day.body_weight
         else:
             current_day.trend = None
 
