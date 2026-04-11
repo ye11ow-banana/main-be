@@ -14,6 +14,7 @@ from auth.models import (
     UserInfoDTO,
     UserInLoginDTO,
     UserVerificationCodeDTO,
+    GoogleTokenDTO
 )
 from config.dependencies import (
     ActiveUserDep,
@@ -45,6 +46,22 @@ async def sign_in(
         )
     return ResponseDTO[TokenDTO](data=token)
 
+@router.post("/google")
+@inject
+async def google_sign_in(
+    payload: GoogleTokenDTO,
+    jwt_auth_service: JWTAuthenticationDep,
+) -> ResponseDTO[TokenDTO]:
+    try:
+        token = await jwt_auth_service.authenticate_google_user(payload.id_token)
+        print(token)
+    except AuthenticationException:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid Google token",
+        )
+
+    return ResponseDTO[TokenDTO](data=token)
 
 @router.post("/refresh-token")
 @inject
