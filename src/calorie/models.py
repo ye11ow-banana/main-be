@@ -3,7 +3,14 @@ from decimal import Decimal
 from enum import StrEnum
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator, RootModel
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    RootModel,
+    field_validator,
+    model_validator,
+)
 
 from models import DateRangeDTO
 
@@ -40,6 +47,7 @@ class DayInDBDTO(BaseModel):
     created_at: datetime
     updated_at: datetime | None = None
     user_id: UUID
+
 
 class DaysFilterSortByEnum(StrEnum):
     MOST_RECENT = "most_recent"
@@ -226,6 +234,7 @@ class DayProductCreationDTO(BaseModel):
     day_id: UUID | None
     product_id: UUID
     weight: int
+
 
 class BodyWeightMapDTO(RootModel[dict[UUID, Decimal | None]]):
     pass

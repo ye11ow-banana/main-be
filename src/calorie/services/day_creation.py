@@ -29,9 +29,12 @@ class DayCreationService:
             affected_users = set()
 
             standalone_affected = await self._upsert_standalone_metrics(
-                users_with_no_products := (
-                        (set(data.user_additional_calories.keys()) | set(data.all_body_weights.keys()))
-                        - set(user_to_products_map.keys())
+                (
+                    (
+                        set(data.user_additional_calories.keys())
+                        | set(data.all_body_weights.keys())
+                    )
+                    - set(user_to_products_map.keys())
                 ),
                 data.user_additional_calories,
                 data.all_body_weights,
@@ -48,7 +51,7 @@ class DayCreationService:
             affected_users |= created_affected
 
             for user_id in affected_users:
-                await self._uow.days.update_weight_trend_for_day(user_id, data.date)
+                await self._uow.days.update_weight_trend(user_id, data.date)
 
             await self._uow.commit()
 
@@ -70,12 +73,12 @@ class DayCreationService:
         return user_to_day_map
 
     async def _create_days(
-            self,
-            day_date: date,
-            user_to_day_map: dict[UUID, DayInDBDTO | None],
-            user_to_products_map: dict[UUID, list[DayProductCreationDTO]],
-            user_additional_calories: dict[UUID, Decimal],
-            user_body_weight: dict[UUID, Decimal],
+        self,
+        day_date: date,
+        user_to_day_map: dict[UUID, DayInDBDTO | None],
+        user_to_products_map: dict[UUID, list[DayProductCreationDTO]],
+        user_additional_calories: dict[UUID, Decimal],
+        user_body_weight: dict[UUID, Decimal],
     ) -> set[UUID]:
 
         affected_users = set()
@@ -126,11 +129,11 @@ class DayCreationService:
         return affected_users
 
     async def _upsert_standalone_metrics(
-            self,
-            user_ids: set[UUID],
-            user_additional_calories: dict[UUID, Decimal],
-            all_body_weights: dict[UUID, Decimal | None],
-            day_date: date
+        self,
+        user_ids: set[UUID],
+        user_additional_calories: dict[UUID, Decimal],
+        all_body_weights: dict[UUID, Decimal | None],
+        day_date: date,
     ) -> set[UUID]:
 
         affected_users = set()
@@ -163,7 +166,8 @@ class DayCreationService:
 
                 update_data = {
                     "total_calories": day.total_calories + additional_calories,
-                    "additional_calories": day.additional_calories + additional_calories,
+                    "additional_calories": day.additional_calories
+                    + additional_calories,
                 }
 
                 if new_body_weight is not None:
