@@ -1,5 +1,6 @@
 import re
 from datetime import datetime
+from typing import TypedDict
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
@@ -74,5 +75,14 @@ class UserVerificationCodeDTO(BaseModel):
 class RefreshTokenDTO(BaseModel):
     refresh_token: str
 
-class GoogleTokenDTO(BaseModel):
+
+class GoogleSignInDTO(BaseModel):
     id_token: str
+
+
+class GoogleTokenPayload(TypedDict):
+    email: str
+    email_verified: bool
+    sub: str
+    iss: str
+    aud: str
