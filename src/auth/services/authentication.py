@@ -1,18 +1,24 @@
 from abc import ABC, abstractmethod
 from datetime import UTC, datetime, timedelta
+from typing import cast
 
+from google.auth.transport import requests as google_requests
+from google.oauth2 import id_token as google_id_token
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from passlib.exc import UnknownHashError
 from sqlalchemy.orm.exc import NoResultFound
 
 from auth.exceptions import AuthenticationException
-from auth.models import TokenDTO, UserInDBDTO, UserInfoDTO, UserInLoginDTO
+from auth.models import (
+    GoogleTokenPayload,
+    TokenDTO,
+    UserInDBDTO,
+    UserInfoDTO,
+    UserInLoginDTO,
+)
 from config import settings
 from unitofwork import IUnitOfWork
-
-from google.oauth2 import id_token
-from google.auth.transport import requests
 
 
 class IAuthenticationService(ABC):
@@ -47,74 +53,60 @@ class JWTAuthenticationService(IAuthenticationService):
         try:
             async with self._uow:
                 db_user = await self._get_db_user_by_username_or_email(user.username)
+
+            if not db_user:
+                raise AuthenticationException("Incorrect username or password")
+
             await self._verify_password(user.password, db_user.hashed_password)
+
         except (NoResultFound, ValueError):
             raise AuthenticationException("Incorrect username or password")
+
         return await self._issue_tokens(user.username)
 
-    # async def authenticate_google_user(self, token: str) -> TokenDTO:
-    #     try:
-    #         id_info = id_token.verify_oauth2_token(
-    #             token,
-    #             requests.Request(),
-    #             settings.google.client_id,
-    #         )
-    #     except ValueError:
-    #         raise AuthenticationException("Invalid Google token")
-    #
-    #     email = id_info.get("email")
-    #     email_verified = id_info.get("email_verified")
-    #
-    #     if not email or not email_verified:
-    #         raise AuthenticationException("Invalid Google account")
-    #
-    #     async with self._uow:
-    #         try:
-    #             user = await self._get_db_user_by_username_or_email(email)
-    #
-    #             if not user:
-    #                 raise AuthenticationException("User with this email does not exist")
-    #         except NoResultFound:
-    #             raise AuthenticationException("Account with that email does not exist")
-    #
-    #     return await self._issue_tokens(email)
+    async def authenticate_google_user(self, google_token: str) -> TokenDTO:
+        payload = await self._verify_google_token(google_token)
 
-    async def authenticate_google_user(self, id_token: str):
-        payload = await self._verify_google_token(id_token)
+        email = payload["email"]
 
-        email = payload.get("email")
-        if not email:
-            raise UnauthorizedException("Email not provided by Google")
+        async with self._uow:
+            user = await self._get_db_user_by_username_or_email(email)
 
-        user = await self._get_db_user_by_username_or_email(email)
         if not user:
-            raise UnauthorizedException("User not found")
+            raise AuthenticationException("User not found")
 
-        return self._issue_tokens(user)
+        if not user.is_verified:
+            raise AuthenticationException("User is not verified")
 
-    async def _verify_google_token(self, id_token_str: str) -> dict:
+        return await self._issue_tokens(user.email)
+
+    @staticmethod
+    async def _verify_google_token(id_token_str: str) -> GoogleTokenPayload:
         try:
-            request = requests.Request()
+            request = google_requests.Request()
 
-            payload = id_token.verify_oauth2_token(
-                id_token_str,
-                request,
-                audience=settings.google.client_id,
+            payload = cast(
+                GoogleTokenPayload,
+                google_id_token.verify_oauth2_token(
+                    id_token_str,
+                    request,
+                    audience=settings.google.client_id,
+                ),
             )
-
-            if payload["iss"] not in ["accounts.google.com", "https://accounts.google.com"]:
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="Invalid token issuer",
-                )
-
-            return payload
 
         except ValueError:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid Google token",
-            )
+            raise AuthenticationException("Invalid Google token")
+
+        if payload.get("iss") not in (
+            "accounts.google.com",
+            "https://accounts.google.com",
+        ):
+            raise AuthenticationException("Invalid token issuer")
+
+        if not payload.get("email_verified"):
+            raise AuthenticationException("Google email not verified")
+
+        return payload
 
     async def get_current_user(self, token: str) -> UserInfoDTO:
         try:
@@ -161,9 +153,7 @@ class JWTAuthenticationService(IAuthenticationService):
             expires_delta=access_token_expires,
         )
 
-        refresh_token_expires = timedelta(
-            days=settings.jwt.refresh_token_expire_days
-        )
+        refresh_token_expires = timedelta(days=settings.jwt.refresh_token_expire_days)
         refresh_token = await self.create_access_token(
             data={"sub": subject, "token_type": "refresh"},
             expires_delta=refresh_token_expires,
