@@ -53,10 +53,6 @@ class JWTAuthenticationService(IAuthenticationService):
         try:
             async with self._uow:
                 db_user = await self._get_db_user_by_username_or_email(user.username)
-
-            if not db_user:
-                raise AuthenticationException("Incorrect username or password")
-
             await self._verify_password(user.password, db_user.hashed_password)
 
         except (NoResultFound, ValueError):
