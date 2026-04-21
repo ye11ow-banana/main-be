@@ -88,7 +88,7 @@ async def get_body_weights_by_date(
 ) -> ResponseDTO[BodyWeightMapDTO]:
     body_weights = await day_service.get_body_weights_by_date(target_date=target_date)
 
-    if not body_weights.root:
+    if not body_weights:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="No body weights found for this date.",
@@ -198,7 +198,6 @@ async def delete_product(
 
 
 @router.post("/days")
-@inject
 async def add_day(_: ActiveUserDep, data: DayCreationDTO) -> ResponseDTO[SuccessDTO]:
     day_creation_service = DayCreationService(uow=Container.uow())
     try:

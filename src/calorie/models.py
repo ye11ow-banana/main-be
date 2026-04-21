@@ -7,7 +7,6 @@ from pydantic import (
     BaseModel,
     ConfigDict,
     Field,
-    RootModel,
     field_validator,
     model_validator,
 )
@@ -94,6 +93,11 @@ class DayProductDTO(BaseModel):
         return obj
 
 
+class BodyWeightMapDTO(BaseModel):
+    user_id: UUID
+    body_weight: Decimal | None
+
+
 class DayMeasurementUpdateDTO(BaseModel):
     body_weight: Decimal | None = None
     body_fat: Decimal | None = None
@@ -117,7 +121,7 @@ class DayMeasurementUpdateDTO(BaseModel):
 class DayFullInfoDTO(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    id: UUID
+    id: UUID | None = None
     body_weight: Decimal | None = None
     body_fat: Decimal | None = None
     trend: Decimal | None = None
@@ -127,7 +131,7 @@ class DayFullInfoDTO(BaseModel):
     total_carbs: Decimal = Decimal("0.0")
     total_calories: Decimal = Decimal("0.0")
     additional_calories: Decimal = Decimal("0.0")
-    user_body_weight: dict[UUID, Decimal] = {}
+    user_body_weight: list[BodyWeightMapDTO] = Field(default_factory=list)
     products: list[DayProductDTO] = Field(validation_alias="day_products")
 
 
@@ -234,7 +238,3 @@ class DayProductCreationDTO(BaseModel):
     day_id: UUID | None
     product_id: UUID
     weight: int
-
-
-class BodyWeightMapDTO(RootModel[dict[UUID, Decimal | None]]):
-    pass
