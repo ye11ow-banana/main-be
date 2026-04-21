@@ -9,6 +9,7 @@ from sqlalchemy.orm import selectinload
 
 from calorie import orm
 from calorie.models import (
+    BodyWeightMapDTO,
     DayFullInfoDTO,
     DayInDBDTO,
     DayProductCreationDTO,
@@ -133,57 +134,79 @@ class DayRepository(SQLAlchemyRepository):
             for day in days
         ]
 
-    async def update_weight_trend(self, user_id: UUID, target_date: date) -> None:
+    async def get_trend_adjacent_days(
+        self, user_id: UUID, target_date: date
+    ) -> tuple[orm.Day | None, orm.Day | None, orm.Day | None]:
+
         start, end = self._date_to_range(target_date)
 
-        current = await self._session.execute(
-            select(self.model)
-            .where(self.model.user_id == user_id)
-            .where(self.model.created_at >= start)
-            .where(self.model.created_at < end)
-        )
-        current_day = current.scalar_one_or_none()
+        current_day = (
+            await self._session.execute(
+                select(self.model)
+                .where(self.model.user_id == user_id)
+                .where(self.model.created_at >= start)
+                .where(self.model.created_at < end)
+            )
+        ).scalar_one_or_none()
 
-        if not current_day or current_day.body_weight is None:
+        if current_day is None:
+            return None, None, None
+
+        previous_day = (
+            await self._session.execute(
+                select(self.model)
+                .where(self.model.user_id == user_id)
+                .where(self.model.created_at < current_day.created_at)
+                .order_by(self.model.created_at.desc())
+                .limit(1)
+            )
+        ).scalar_one_or_none()
+
+        next_day = (
+            await self._session.execute(
+                select(self.model)
+                .where(self.model.user_id == user_id)
+                .where(self.model.created_at > current_day.created_at)
+                .where(self.model.body_weight.isnot(None))
+                .order_by(self.model.created_at.asc())
+                .limit(1)
+            )
+        ).scalar_one_or_none()
+
+        return previous_day, current_day, next_day
+
+    @staticmethod
+    def update_trend(
+        previous_day: orm.Day | None,
+        current_day: orm.Day | None,
+        next_day: orm.Day | None,
+    ) -> None:
+        if current_day is None or current_day.body_weight is None:
             return
-
-        previous = await self._session.execute(
-            select(self.model)
-            .where(self.model.user_id == user_id)
-            .where(self.model.created_at < current_day.created_at)
-            .order_by(self.model.created_at.desc())
-            .limit(1)
-        )
-        previous_day = previous.scalar_one_or_none()
 
         if previous_day and previous_day.body_weight is not None:
             current_day.trend = current_day.body_weight - previous_day.body_weight
         else:
             current_day.trend = None
 
-        next_ = await self._session.execute(
-            select(self.model)
-            .where(self.model.user_id == user_id)
-            .where(self.model.body_weight.isnot(None))
-            .where(self.model.created_at > current_day.created_at)
-            .order_by(self.model.created_at.asc())
-            .limit(1)
-        )
-        next_day = next_.scalar_one_or_none()
-
-        if next_day:
+        if next_day and next_day.body_weight is not None:
             next_day.trend = next_day.body_weight - current_day.body_weight
 
-    async def get_all_by_date(self, date_: date) -> list[DayInDBDTO]:
+    async def get_all_by_date(self, date_: date) -> list[BodyWeightMapDTO]:
         start, end = self._date_to_range(date_)
 
         query = (
-            select(self.model)
+            select(self.model.user_id, self.model.body_weight)
             .where(self.model.created_at >= start)
             .where(self.model.created_at < end)
         )
-        response = await self._session.execute(query)
-        return [DayInDBDTO.model_validate(row) for row in response.scalars()]
+
+        rows = await self._session.execute(query)
+
+        return [
+            BodyWeightMapDTO(user_id=r.user_id, body_weight=r.body_weight)
+            for r in rows.mappings()
+        ]
 
     async def get_by_date(self, date_: date, **data: str | int | UUID) -> DayInDBDTO:
         start, end = self._date_to_range(date_)
@@ -201,6 +224,21 @@ class DayRepository(SQLAlchemyRepository):
             raise NoResultFound(f"No result found for date {date_}")
 
         return DayInDBDTO.model_validate(row)
+
+    async def get_by_id_and_user(self, user_id: UUID, day_id: UUID) -> orm.Day:
+        query = (
+            select(self.model)
+            .where(self.model.id == day_id)
+            .where(self.model.user_id == user_id)
+        )
+
+        result = await self._session.execute(query)
+        day = result.scalar_one_or_none()
+
+        if day is None:
+            raise NoResultFound(f"Day not found: {day_id}")
+
+        return day
 
     async def add(self, **insert_data) -> DayInDBDTO:
         new_model_object = self.model(**insert_data)

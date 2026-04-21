@@ -51,7 +51,15 @@ class DayCreationService:
             affected_users |= created_affected
 
             for user_id in affected_users:
-                await self._uow.days.update_weight_trend(user_id, data.date)
+                (
+                    prev_day,
+                    curr_day,
+                    next_day,
+                ) = await self._uow.days.get_trend_adjacent_days(
+                    user_id, target_date=data.date
+                )
+
+                self._uow.days.update_trend(prev_day, curr_day, next_day)
 
             await self._uow.commit()
 
