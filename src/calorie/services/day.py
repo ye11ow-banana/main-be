@@ -41,15 +41,10 @@ class DayService:
             )
 
             if data.body_weight is not None:
-                (
-                    prev_day,
-                    curr_day,
-                    next_day,
-                ) = await self._uow.days.get_trend_adjacent_days(
+                days = await self._uow.days.get_trend_adjacent_days(
                     user_id, target_date=day.created_at.date()
                 )
-
-                self._uow.days.update_trend(prev_day, curr_day, next_day)
+                self._uow.days.update_trend(*days)
 
             await self._uow.commit()
 

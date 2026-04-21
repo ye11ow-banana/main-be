@@ -51,15 +51,10 @@ class DayCreationService:
             affected_users |= created_affected
 
             for user_id in affected_users:
-                (
-                    prev_day,
-                    curr_day,
-                    next_day,
-                ) = await self._uow.days.get_trend_adjacent_days(
+                days = await self._uow.days.get_trend_adjacent_days(
                     user_id, target_date=data.date
                 )
-
-                self._uow.days.update_trend(prev_day, curr_day, next_day)
+                self._uow.days.update_trend(*days)
 
             await self._uow.commit()
 
