@@ -47,7 +47,7 @@ async def sign_in(
     return ResponseDTO[TokenDTO](data=token)
 
 
-@router.post("/google")
+@router.post("/google/sign-in")
 @inject
 async def google_sign_in(
     payload: GoogleSignInDTO,

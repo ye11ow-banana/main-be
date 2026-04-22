@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
 from datetime import UTC, datetime, timedelta
-from typing import cast
 
 from google.auth.transport import requests as google_requests
 from google.oauth2 import id_token as google_id_token
@@ -54,19 +53,16 @@ class JWTAuthenticationService(IAuthenticationService):
             async with self._uow:
                 db_user = await self._get_db_user_by_username_or_email(user.username)
             await self._verify_password(user.password, db_user.hashed_password)
-
         except (NoResultFound, ValueError):
             raise AuthenticationException("Incorrect username or password")
 
         return await self._issue_tokens(user.username)
 
     async def authenticate_google_user(self, google_token: str) -> TokenDTO:
-        payload = await self._verify_google_token(google_token)
-
-        email = payload["email"]
+        payload = self._verify_google_token(google_token)
 
         async with self._uow:
-            user = await self._get_db_user_by_username_or_email(email)
+            user = await self._get_db_user_by_username_or_email(payload.email)
 
         if not user:
             raise AuthenticationException("User not found")
@@ -77,29 +73,28 @@ class JWTAuthenticationService(IAuthenticationService):
         return await self._issue_tokens(user.email)
 
     @staticmethod
-    async def _verify_google_token(id_token_str: str) -> GoogleTokenPayload:
+    def _verify_google_token(id_token_str: str) -> GoogleTokenPayload:
         try:
             request = google_requests.Request()
 
-            payload = cast(
-                GoogleTokenPayload,
-                google_id_token.verify_oauth2_token(
-                    id_token_str,
-                    request,
-                    audience=settings.google.client_id,
-                ),
+            raw_payload = google_id_token.verify_oauth2_token(
+                id_token_str,
+                request,
+                audience=settings.google.client_id,
             )
 
         except ValueError:
             raise AuthenticationException("Invalid Google token")
 
-        if payload.get("iss") not in (
+        payload = GoogleTokenPayload.model_validate(raw_payload)
+
+        if payload.iss not in (
             "accounts.google.com",
             "https://accounts.google.com",
         ):
             raise AuthenticationException("Invalid token issuer")
 
-        if not payload.get("email_verified"):
+        if not payload.email_verified:
             raise AuthenticationException("Google email not verified")
 
         return payload
