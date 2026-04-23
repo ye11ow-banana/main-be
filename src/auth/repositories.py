@@ -33,7 +33,7 @@ class UserRepository(SQLAlchemyRepository):
                 self.model.email == username_or_email,
             )
         )
-        user = (await self._session.execute(stmt)).scalar_one_or_none()
+        user = (await self._session.execute(stmt)).scalar_one()
         return UserInDBDTO.model_validate(user)
 
     async def get_all_verified(
