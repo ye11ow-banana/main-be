@@ -34,7 +34,7 @@ class TrendItemDTO(BaseModel):
 class DayInDBDTO(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    id: UUID
+    id: UUID | None = None
     body_weight: Decimal | None = None
     body_fat: Decimal | None = None
     trend: Decimal | None = None
