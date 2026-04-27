@@ -43,9 +43,9 @@ class DayInDBDTO(BaseModel):
     total_carbs: Decimal = Decimal("0.0")
     total_calories: Decimal = Decimal("0.0")
     additional_calories: Decimal = Decimal("0.0")
-    created_at: datetime
+    created_at: datetime | None = None
     updated_at: datetime | None = None
-    user_id: UUID
+    user_id: UUID | None = None
 
 
 class DaysFilterSortByEnum(StrEnum):
