@@ -23,6 +23,8 @@ dependencies = [
     "boto3-stubs>=1.42.32",
     "filetype>=1.2.0",
     "sentry-sdk>=2.55.0",
+    "google-auth>=2.49.1",
+    "requests>=2.33.1",
 ]
 
 [dependency-groups]
