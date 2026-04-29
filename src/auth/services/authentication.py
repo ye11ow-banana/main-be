@@ -1,13 +1,21 @@
 from abc import ABC, abstractmethod
 from datetime import UTC, datetime, timedelta
 
+from google.auth.transport import requests as google_requests
+from google.oauth2 import id_token as google_id_token
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from passlib.exc import UnknownHashError
 from sqlalchemy.orm.exc import NoResultFound
 
 from auth.exceptions import AuthenticationException
-from auth.models import TokenDTO, UserInDBDTO, UserInfoDTO, UserInLoginDTO
+from auth.models import (
+    GoogleTokenPayload,
+    TokenDTO,
+    UserInDBDTO,
+    UserInfoDTO,
+    UserInLoginDTO,
+)
 from config import settings
 from unitofwork import IUnitOfWork
 
@@ -47,20 +55,49 @@ class JWTAuthenticationService(IAuthenticationService):
             await self._verify_password(user.password, db_user.hashed_password)
         except (NoResultFound, ValueError):
             raise AuthenticationException("Incorrect username or password")
-        access_token_expires = timedelta(
-            minutes=settings.jwt.access_token_expire_minutes
-        )
-        access_token = await self.create_access_token(
-            data={"sub": user.username}, expires_delta=access_token_expires
-        )
-        refresh_token_expires = timedelta(days=settings.jwt.refresh_token_expire_days)
-        refresh_token = await self.create_access_token(
-            data={"sub": user.username, "token_type": "refresh"},
-            expires_delta=refresh_token_expires,
-        )
-        return TokenDTO(
-            access_token=access_token, refresh_token=refresh_token, token_type="bearer"
-        )
+
+        return await self._issue_tokens(user.username)
+
+    async def authenticate_google_user(self, google_token: str) -> TokenDTO:
+        payload = self._verify_google_token(google_token)
+
+        async with self._uow:
+            user = await self._get_db_user_by_username_or_email(payload.email)
+
+        if not user:
+            raise AuthenticationException("User not found")
+
+        if not user.is_verified:
+            raise AuthenticationException("User is not verified")
+
+        return await self._issue_tokens(user.email)
+
+    @staticmethod
+    def _verify_google_token(id_token_str: str) -> GoogleTokenPayload:
+        try:
+            request = google_requests.Request()
+
+            raw_payload = google_id_token.verify_oauth2_token(
+                id_token_str,
+                request,
+                audience=settings.google.client_id,
+            )
+
+        except ValueError:
+            raise AuthenticationException("Invalid Google token")
+
+        payload = GoogleTokenPayload.model_validate(raw_payload)
+
+        if payload.iss not in (
+            "accounts.google.com",
+            "https://accounts.google.com",
+        ):
+            raise AuthenticationException("Invalid token issuer")
+
+        if not payload.email_verified:
+            raise AuthenticationException("Google email not verified")
+
+        return payload
 
     async def get_current_user(self, token: str) -> UserInfoDTO:
         try:
@@ -96,6 +133,27 @@ class JWTAuthenticationService(IAuthenticationService):
         )
         return TokenDTO(
             access_token=access_token, refresh_token=refresh_token, token_type="bearer"
+        )
+
+    async def _issue_tokens(self, subject: str) -> TokenDTO:
+        access_token_expires = timedelta(
+            minutes=settings.jwt.access_token_expire_minutes
+        )
+        access_token = await self.create_access_token(
+            data={"sub": subject},
+            expires_delta=access_token_expires,
+        )
+
+        refresh_token_expires = timedelta(days=settings.jwt.refresh_token_expire_days)
+        refresh_token = await self.create_access_token(
+            data={"sub": subject, "token_type": "refresh"},
+            expires_delta=refresh_token_expires,
+        )
+
+        return TokenDTO(
+            access_token=access_token,
+            refresh_token=refresh_token,
+            token_type="bearer",
         )
 
     async def _get_db_user_by_jwt(self, token: str) -> UserInDBDTO:

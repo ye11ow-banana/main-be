@@ -73,3 +73,15 @@ class UserVerificationCodeDTO(BaseModel):
 
 class RefreshTokenDTO(BaseModel):
     refresh_token: str
+
+
+class GoogleSignInDTO(BaseModel):
+    id_token: str
+
+
+class GoogleTokenPayload(BaseModel):
+    email: str
+    email_verified: bool
+    sub: str
+    iss: str
+    aud: str
