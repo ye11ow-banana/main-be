@@ -23,6 +23,21 @@ class User(Base):
     avatar_url: Mapped[str | None] = mapped_column(nullable=True)
     created_at: Mapped[created_at]
 
+
+    sent_friend_requests = relationship(
+        "Friendship",
+        foreign_keys="Friendship.requester_id",
+        back_populates="requester",
+        cascade="all, delete-orphan",
+    )
+
+    received_friend_requests = relationship(
+        "Friendship",
+        foreign_keys="Friendship.addressee_id",
+        back_populates="addressee",
+        cascade="all, delete-orphan",
+    )
+
     verification_code: Mapped["VerificationCode"] = relationship(
         "VerificationCode", back_populates="user"
     )

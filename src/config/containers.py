@@ -16,6 +16,7 @@ from calorie.services.trend import TrendService
 from clients.s3 import S3Client
 from config import settings
 from notification.services.email import EmailNotificationService
+from social.services import FriendshipService
 from unitofwork import UnitOfWork
 
 
@@ -50,6 +51,10 @@ class Container(containers.DeclarativeContainer):
     jwt_authentication_service = providers.Factory(JWTAuthenticationService, uow=uow)
     registration_service = providers.Factory(RegistrationService, uow=uow)
     user_service = providers.Factory(UserService, uow=uow)
+    friendship_service = providers.Factory(
+        FriendshipService,
+        uow=uow,
+    )
     notification_service = providers.Factory(EmailNotificationService, uow=uow)
     app_service = providers.Factory(AppService, uow=uow)
     trend_service = providers.Factory(TrendService, uow=uow)
