@@ -5,7 +5,6 @@ from dependency_injector.wiring import inject
 from fastapi import APIRouter, File, Form, HTTPException, Query, UploadFile, status
 
 from calorie.models import (
-    BodyWeightMapDTO,
     DayCreationDTO,
     DayFullInfoDTO,
     DayMeasurementUpdateDTO,
@@ -17,6 +16,7 @@ from calorie.models import (
     TrendFilterDTO,
     TrendItemDTO,
     TrendTypeEnum,
+    UserBodyWeightDTO,
 )
 from calorie.services.day_creation import DayCreationService
 from config.containers import Container
@@ -85,7 +85,7 @@ async def get_body_weights_by_date(
     _: ActiveUserDep,
     day_service: DayServiceDep,
     target_date: date,
-) -> ResponseDTO[BodyWeightMapDTO]:
+) -> ResponseDTO[UserBodyWeightDTO]:
     body_weights = await day_service.get_body_weights_by_date(target_date=target_date)
 
     if not body_weights:

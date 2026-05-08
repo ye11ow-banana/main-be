@@ -6,7 +6,6 @@ from uuid import UUID
 from sqlalchemy.exc import NoResultFound
 
 from calorie.models import (
-    BodyWeightMapDTO,
     DayFullInfoDTO,
     DayMeasurementUpdateDTO,
     DaysFilterDTO,
@@ -14,6 +13,7 @@ from calorie.models import (
     OpenAIProductCreationDTO,
     OpenAIProductDTO,
     OpenAIProductMatchDTO,
+    UserBodyWeightDTO,
 )
 from calorie.openai_client.client import CalorieOpenAIClient
 from calorie.orm import Day
@@ -34,7 +34,7 @@ class DayService:
         async with self._uow:
             update_data = data.model_dump(exclude_unset=True)
 
-            day: Day = await self._uow.days.get_by_id_and_user(day_id, user_id)
+            day: Day = await self._uow.days.get_by_id_and_user_id(day_id, user_id)
 
             await self._uow.days.update(
                 {"id": day_id, "user_id": user_id}, **update_data
@@ -64,11 +64,11 @@ class DayService:
 
     async def get_body_weights_by_date(
         self, target_date: date
-    ) -> list[BodyWeightMapDTO]:
+    ) -> list[UserBodyWeightDTO]:
         async with self._uow:
             days = await self._uow.days.get_all_by_date(target_date)
             return [
-                BodyWeightMapDTO(
+                UserBodyWeightDTO(
                     user_id=day.user_id,
                     body_weight=day.body_weight,
                 )
