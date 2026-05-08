@@ -4,7 +4,7 @@ import uuid
 from decimal import Decimal
 from typing import TYPE_CHECKING
 
-from sqlalchemy import UUID, ForeignKey, Numeric
+from sqlalchemy import UUID, ForeignKey
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -20,7 +20,7 @@ class Day(Base):
     id: Mapped[uuidpk]
     body_weight: Mapped[Decimal] = mapped_column(nullable=True)
     body_fat: Mapped[Decimal] = mapped_column(nullable=True)
-    trend: Mapped[Decimal | None] = mapped_column(Numeric, nullable=True)
+    trend: Mapped[Decimal | None] = mapped_column(nullable=True)
     total_proteins: Mapped[Decimal] = mapped_column(
         nullable=False, default=Decimal("0.0")
     )

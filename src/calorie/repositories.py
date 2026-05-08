@@ -9,7 +9,6 @@ from sqlalchemy.orm import selectinload
 
 from calorie import orm
 from calorie.models import (
-    BodyWeightMapDTO,
     DayFullInfoDTO,
     DayInDBDTO,
     DayProductCreationDTO,
@@ -19,6 +18,7 @@ from calorie.models import (
     OpenAIProductMatchDTO,
     ProductDTO,
     TrendItemDTO,
+    UserBodyWeightDTO,
 )
 from models import DateRangeDTO
 from repository import SQLAlchemyRepository
@@ -192,7 +192,7 @@ class DayRepository(SQLAlchemyRepository):
         if next_day and next_day.body_weight is not None:
             next_day.trend = next_day.body_weight - current_day.body_weight
 
-    async def get_all_by_date(self, date_: date) -> list[BodyWeightMapDTO]:
+    async def get_all_by_date(self, date_: date) -> list[UserBodyWeightDTO]:
         start, end = self._date_to_range(date_)
 
         query = (
@@ -204,7 +204,7 @@ class DayRepository(SQLAlchemyRepository):
         rows = await self._session.execute(query)
 
         return [
-            BodyWeightMapDTO(user_id=r.user_id, body_weight=r.body_weight)
+            UserBodyWeightDTO(user_id=r.user_id, body_weight=r.body_weight)
             for r in rows.mappings()
         ]
 
@@ -225,7 +225,7 @@ class DayRepository(SQLAlchemyRepository):
 
         return DayInDBDTO.model_validate(row)
 
-    async def get_by_id_and_user(self, user_id: UUID, day_id: UUID) -> orm.Day:
+    async def get_by_id_and_user_id(self, user_id: UUID, day_id: UUID) -> orm.Day:
         query = (
             select(self.model)
             .where(self.model.id == day_id)
