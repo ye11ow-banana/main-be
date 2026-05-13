@@ -8,6 +8,7 @@ from auth.exceptions import (
     WrongEmailVerificationCodeException,
 )
 from auth.models import (
+    GoogleSignInDTO,
     RefreshTokenDTO,
     TokenDTO,
     UserInCreateDTO,
@@ -43,6 +44,24 @@ async def sign_in(
             detail="Could not validate credentials",
             headers={"WWW-Authenticate": "Bearer"},
         )
+    return ResponseDTO[TokenDTO](data=token)
+
+
+@router.post("/google/sign-in")
+@inject
+async def google_sign_in(
+    payload: GoogleSignInDTO,
+    jwt_auth_service: JWTAuthenticationDep,
+) -> ResponseDTO[TokenDTO]:
+    try:
+        token = await jwt_auth_service.authenticate_google_user(payload.id_token)
+    except AuthenticationException as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=str(e),
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
     return ResponseDTO[TokenDTO](data=token)
 
 

@@ -42,6 +42,10 @@ class S3Settings(BaseModel):
     avatar_bucket: str = ""
 
 
+class GoogleSettings(BaseModel):
+    client_id: str = ""
+
+
 class Settings(BaseSettings):
     secret_key: str = "secret"
 
@@ -53,6 +57,7 @@ class Settings(BaseSettings):
     s3: S3Settings = S3Settings()
     sentry_dsn: str = ""
     production: bool = False
+    google: GoogleSettings = GoogleSettings()
 
     model_config = SettingsConfigDict(
         env_file=".env",

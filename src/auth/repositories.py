@@ -34,6 +34,10 @@ class UserRepository(SQLAlchemyRepository):
             )
         )
         user = (await self._session.execute(stmt)).scalar_one_or_none()
+
+        if not user:
+            return None
+
         return UserInDBDTO.model_validate(user)
 
     async def get_all_verified(

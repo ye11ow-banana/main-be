@@ -206,16 +206,27 @@ class ProductRepository(SQLAlchemyRepository):
         return dto, score
 
     async def add_openai_product(self, product: OpenAIProductCreationDTO) -> UUID:
-        new_model_object = self.model(
+        statement = insert(self.model).values(
             name=product.name_ua,
             proteins=product.per_100g.proteins,
             fats=product.per_100g.fats,
             carbs=product.per_100g.carbs,
             calories=product.per_100g.calories,
         )
-        self._session.add(new_model_object)
-        await self._session.flush()
-        return new_model_object.id
+
+        statement = statement.on_conflict_do_nothing(
+            index_elements=[self.model.name]
+        ).returning(self.model.id)
+
+        result = await self._session.execute(statement)
+        inserted_id = result.scalar()
+
+        if not inserted_id:
+            query = select(self.model.id).where(self.model.name == product.name_ua)
+            existing_result = await self._session.execute(query)
+            inserted_id = existing_result.scalar_one()
+
+        return inserted_id
 
     async def search_by_name(self, q: str, pagination: Pagination) -> list[ProductDTO]:
         query = select(self.model).order_by(self.model.created_at.desc())
