@@ -23,17 +23,16 @@ class User(Base):
     avatar_url: Mapped[str | None] = mapped_column(nullable=True)
     created_at: Mapped[created_at]
 
-
-    sent_friend_requests = relationship(
-        "Friendship",
-        foreign_keys="Friendship.requester_id",
+    sent_team_requests = relationship(
+        "Team",
+        foreign_keys="Team.requester_id",
         back_populates="requester",
         cascade="all, delete-orphan",
     )
 
-    received_friend_requests = relationship(
-        "Friendship",
-        foreign_keys="Friendship.addressee_id",
+    received_team_requests = relationship(
+        "Team",
+        foreign_keys="Team.addressee_id",
         back_populates="addressee",
         cascade="all, delete-orphan",
     )

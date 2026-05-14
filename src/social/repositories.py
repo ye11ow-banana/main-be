@@ -1,63 +1,63 @@
 from uuid import UUID
-from sqlalchemy import select, or_
 
+from sqlalchemy import or_, select
+
+from auth.orm import User
 from repository import SQLAlchemyRepository
 from social import orm
-from auth.orm import User
+from social.models import TeamStatus
 
 
-class FriendshipRepository(SQLAlchemyRepository):
-    model = orm.Friendship
+class TeamRepository(SQLAlchemyRepository):
+    model = orm.Team
 
     async def create(self, requester_id: UUID, addressee_id: UUID):
-        friendship = await self.add(
+        team = await self.add(
             requester_id=requester_id,
             addressee_id=addressee_id,
-            status="pending",
+            status=TeamStatus.PENDING,
         )
-        return friendship
+        return team
 
-    async def get_friendship(self, user1: UUID, user2: UUID):
+    async def get_team(self, user1: UUID, user2: UUID):
         stmt = select(self.model).where(
             or_(
-                (self.model.requester_id == user1)
-                & (self.model.addressee_id == user2),
-                (self.model.requester_id == user2)
-                & (self.model.addressee_id == user1),
+                (self.model.requester_id == user1) & (self.model.addressee_id == user2),
+                (self.model.requester_id == user2) & (self.model.addressee_id == user1),
             )
         )
         result = await self._session.execute(stmt)
         return result.scalars().first()
 
-    async def get_user_friends(self, user_id: UUID):
+    async def get_user_team_members(self, user_id: UUID):
         stmt = select(self.model).where(
-            (self.model.status == "accepted")
+            (self.model.status == TeamStatus.ACCEPTED)
             & (
-                    (self.model.requester_id == user_id)
-                    | (self.model.addressee_id == user_id)
+                (self.model.requester_id == user_id)
+                | (self.model.addressee_id == user_id)
             )
         )
         result = await self._session.execute(stmt)
 
-        friendships = result.scalars().all()
+        team_members = result.scalars().all()
 
-        return friendships
+        return team_members
 
-    async def get_user_friends_users(self, user_id: UUID):
+    async def get_user_team_members_users(self, user_id: UUID):
         stmt = (
             select(User)
             .join(
                 self.model,
                 (
-                        (self.model.requester_id == User.id)
-                        | (self.model.addressee_id == User.id)
+                    (self.model.requester_id == User.id)
+                    | (self.model.addressee_id == User.id)
                 ),
             )
             .where(
-                (self.model.status == "accepted")
+                (self.model.status == TeamStatus.ACCEPTED)
                 & (
-                        (self.model.requester_id == user_id)
-                        | (self.model.addressee_id == user_id)
+                    (self.model.requester_id == user_id)
+                    | (self.model.addressee_id == user_id)
                 )
                 & (User.id != user_id)
             )
@@ -69,10 +69,10 @@ class FriendshipRepository(SQLAlchemyRepository):
     async def get_pending_requests(self, user_id: UUID):
         stmt = select(self.model).where(
             (self.model.addressee_id == user_id)
-            & (self.model.status == "pending")
+            & (self.model.status == TeamStatus.PENDING)
         )
         result = await self._session.execute(stmt)
 
-        friendships = result.scalars().all()
+        teams = result.scalars().all()
 
-        return friendships
+        return teams

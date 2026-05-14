@@ -1,9 +1,17 @@
-from uuid import UUID
 from datetime import datetime
+from enum import Enum
+from uuid import UUID
+
 from pydantic import BaseModel, ConfigDict
 
 
-class FriendResponseDTO(BaseModel):
+class TeamStatus(str, Enum):
+    PENDING = "pending"
+    ACCEPTED = "accepted"
+    REJECTED = "rejected"
+
+
+class TeamResponseDTO(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: UUID
@@ -13,9 +21,9 @@ class FriendResponseDTO(BaseModel):
     created_at: datetime
 
 
-class FriendRequestDTO(BaseModel):
+class TeamRequestDTO(BaseModel):
     user_id: UUID
 
 
-class FriendshipActionDTO(BaseModel):
-    friendship_id: UUID
+class TeamActionDTO(BaseModel):
+    team_member_id: UUID
