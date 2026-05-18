@@ -34,7 +34,7 @@ class DayService:
         async with self._uow:
             update_data = data.model_dump(exclude_unset=True)
 
-            day: Day = await self._uow.days.get_by_id_and_user_id(day_id, user_id)
+            day: Day = await self._uow.days.get_by_id(day_id=day_id)
 
             await self._uow.days.update(
                 {"id": day_id, "user_id": user_id}, **update_data
@@ -78,7 +78,6 @@ class DayService:
     async def get_paginated_days(
         self, user_id: UUID, pagination: Pagination, days_filter: DaysFilterDTO
     ) -> PaginationDTO[DayFullInfoDTO]:
-
         async with self._uow:
             days = await self._uow.days.get_full_paginated_info(
                 user_id, pagination, days_filter
