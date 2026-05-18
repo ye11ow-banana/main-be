@@ -157,6 +157,7 @@ class DayRepository(SQLAlchemyRepository):
                 select(self.model)
                 .where(self.model.user_id == user_id)
                 .where(self.model.created_at < current_day.created_at)
+                .where(self.model.body_weight.isnot(None))
                 .order_by(self.model.created_at.desc())
                 .limit(1)
             )
@@ -225,12 +226,8 @@ class DayRepository(SQLAlchemyRepository):
 
         return DayInDBDTO.model_validate(row)
 
-    async def get_by_id_and_user_id(self, user_id: UUID, day_id: UUID) -> orm.Day:
-        query = (
-            select(self.model)
-            .where(self.model.id == day_id)
-            .where(self.model.user_id == user_id)
-        )
+    async def get_by_id(self, *, day_id: UUID) -> orm.Day:
+        query = select(self.model).where(self.model.id == day_id)
 
         result = await self._session.execute(query)
         day = result.scalar_one_or_none()

@@ -227,8 +227,12 @@ class UserDayProductCreationDTO(BaseModel):
 
 class DayCreationDTO(BaseModel):
     date: date
-    user_additional_calories: dict[UUID, Decimal]  # user_id -> additional_calories
-    user_body_weight: dict[UUID, Decimal]  # user_id -> body_weight
+    user_additional_calories: dict[UUID, Decimal] = Field(
+        default_factory=dict
+    )  # user_id -> additional_calories
+    user_body_weight: dict[UUID, Decimal] = Field(
+        default_factory=dict
+    )  # user_id -> body_weight
     products: list[UserDayProductCreationDTO]
 
 
