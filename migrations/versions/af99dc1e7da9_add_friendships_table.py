@@ -38,6 +38,15 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_index(op.f("ix_teams_id"), "teams", ["id"], unique=False)
+    op.create_index(
+        "uq_teams_user_pair",
+        "teams",
+        [
+            sa.text("LEAST(requester_id, addressee_id)"),
+            sa.text("GREATEST(requester_id, addressee_id)"),
+        ],
+        unique=True,
+    )
     op.alter_column(
         "days",
         "total_proteins",
@@ -101,5 +110,6 @@ def downgrade() -> None:
         existing_nullable=False,
     )
     op.drop_index(op.f("ix_teams_id"), table_name="teams")
+    op.drop_index("uq_teams_user_pair", table_name="teams")
     op.drop_table("teams")
     # ### end Alembic commands ###

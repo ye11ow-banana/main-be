@@ -39,7 +39,7 @@ class TeamService:
 
     async def leave_team(self, user_id: UUID, team_id: UUID):
         async with self._uow:
-            team = self._uow.teams.get(id=team_id)
+            team = await self._uow.teams.get(id=team_id)
 
             if not team or team.status != TeamStatus.ACCEPTED:
                 raise ValueError("Team does not exist")
@@ -69,6 +69,9 @@ class TeamService:
 
             if team.addressee_id != user_id:
                 raise ValueError("Not allowed")
+
+            if team.status != TeamStatus.PENDING:
+                raise ValueError("Cannot reject non-pending request")
 
             await self._uow.teams.remove(id=team_id)
             await self._uow.commit()
