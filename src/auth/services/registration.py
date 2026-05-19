@@ -20,6 +20,7 @@ class RegistrationService:
                 new_user = await self._create_user(
                     user.username, str(user.email), hashed_password
                 )
+                await self._uow.settings.create_for_active_apps(new_user.id)
                 await self._uow.commit()
         except IntegrityError:
             raise RegistrationException(
