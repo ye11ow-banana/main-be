@@ -1,8 +1,13 @@
 from __future__ import annotations
 
-from sqlalchemy.orm import Mapped, mapped_column
+from typing import TYPE_CHECKING
+
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from database import Base, created_at, uuidpk
+
+if TYPE_CHECKING:
+    from setting.orm import Setting
 
 
 class App(Base):
@@ -14,3 +19,7 @@ class App(Base):
     description: Mapped[str] = mapped_column(unique=True, nullable=False)
     is_active: Mapped[bool] = mapped_column(default=True, nullable=False)
     created_at: Mapped[created_at]
+
+    settings: Mapped[list["Setting"]] = relationship(
+        "Setting", back_populates="app", cascade="all, delete-orphan"
+    )
