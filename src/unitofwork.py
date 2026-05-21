@@ -8,6 +8,7 @@ from auth.repositories import UserRepository
 from calorie.repositories import DayProductRepository, DayRepository, ProductRepository
 from notification.repositories import VerificationCodeRepository
 from social.repositories import TeamRepository
+from setting.repositories import SettingRepository
 
 
 class IUnitOfWork(ABC):
@@ -18,6 +19,7 @@ class IUnitOfWork(ABC):
     products: ProductRepository
     day_products: DayProductRepository
     teams: TeamRepository
+    settings: SettingRepository
 
     @abstractmethod
     def __init__(self):
@@ -53,6 +55,8 @@ class UnitOfWork(IUnitOfWork):
         self.products = ProductRepository(self._session)
         self.day_products = DayProductRepository(self._session)
         self.teams = TeamRepository(self._session)
+        self.settings = SettingRepository(self._session)
+        return self
 
     async def __aexit__(self, *args):
         await self.rollback()
