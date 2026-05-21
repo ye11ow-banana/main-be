@@ -1,4 +1,5 @@
 from collections import defaultdict
+from datetime import date
 from decimal import Decimal
 from uuid import UUID
 
@@ -12,8 +13,10 @@ from calorie.models import (
     OpenAIProductCreationDTO,
     OpenAIProductDTO,
     OpenAIProductMatchDTO,
+    UserBodyWeightDTO,
 )
 from calorie.openai_client.client import CalorieOpenAIClient
+from calorie.orm import Day
 from config import settings
 from models import DateRangeDTO, PaginationDTO
 from unitofwork import IUnitOfWork
@@ -25,9 +28,24 @@ class DayService:
         self._uow = uow
         self._calorie_openai_client = calorie_openai_client
 
-    async def update_day(self, day_id: UUID, data: DayMeasurementUpdateDTO) -> None:
+    async def update_day(
+        self, user_id: UUID, day_id: UUID, data: DayMeasurementUpdateDTO
+    ) -> None:
         async with self._uow:
-            await self._uow.days.update({"id": day_id}, **data.model_dump())
+            update_data = data.model_dump(exclude_unset=True)
+
+            day: Day = await self._uow.days.get_by_id(day_id=day_id)
+
+            await self._uow.days.update(
+                {"id": day_id, "user_id": user_id}, **update_data
+            )
+
+            if data.body_weight is not None:
+                days = await self._uow.days.get_trend_adjacent_days(
+                    user_id, target_date=day.created_at.date()
+                )
+                self._uow.days.update_trend(*days)
+
             await self._uow.commit()
 
     async def get_date_range(self, user_id: UUID) -> DateRangeDTO:
@@ -44,6 +62,19 @@ class DayService:
                 end_date=last_day.created_at.date(),
             )
 
+    async def get_body_weights_by_date(
+        self, target_date: date
+    ) -> list[UserBodyWeightDTO]:
+        async with self._uow:
+            days = await self._uow.days.get_all_by_date(target_date)
+            return [
+                UserBodyWeightDTO(
+                    user_id=day.user_id,
+                    body_weight=day.body_weight,
+                )
+                for day in days
+            ]
+
     async def get_paginated_days(
         self, user_id: UUID, pagination: Pagination, days_filter: DaysFilterDTO
     ) -> PaginationDTO[DayFullInfoDTO]:
@@ -51,9 +82,11 @@ class DayService:
             days = await self._uow.days.get_full_paginated_info(
                 user_id, pagination, days_filter
             )
+
             count = await self._uow.days.count_in_date_range(
                 user_id, days_filter.to_date_range()
             )
+
         return PaginationDTO(
             page_count=pagination.get_page_count(count),
             total_count=count,

@@ -1,3 +1,4 @@
+from datetime import date
 from uuid import UUID
 
 from dependency_injector.wiring import inject
@@ -15,6 +16,7 @@ from calorie.models import (
     TrendFilterDTO,
     TrendItemDTO,
     TrendTypeEnum,
+    UserBodyWeightDTO,
 )
 from calorie.services.day_creation import DayCreationService
 from config.containers import Container
@@ -77,15 +79,33 @@ async def get_days(
     return ResponseDTO[PaginationDTO[DayFullInfoDTO]](data=days)
 
 
+@router.get("/days/{target_date}/weight")
+@inject
+async def get_body_weights_by_date(
+    _: ActiveUserDep,
+    day_service: DayServiceDep,
+    target_date: date,
+) -> ResponseDTO[UserBodyWeightDTO]:
+    body_weights = await day_service.get_body_weights_by_date(target_date=target_date)
+
+    if not body_weights:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No body weights found for this date.",
+        )
+
+    return ResponseDTO(data=body_weights)
+
+
 @router.patch("/days/{day_id}")
 @inject
 async def update_day_measurements(
-    _: ActiveUserDep,
+    user: ActiveUserDep,
     day_service: DayServiceDep,
     day_id: UUID,
     data: DayMeasurementUpdateDTO,
 ) -> ResponseDTO[SuccessDTO]:
-    await day_service.update_day(day_id, data)
+    await day_service.update_day(user.id, day_id, data)
     return ResponseDTO[SuccessDTO](data=SuccessDTO())
 
 
@@ -178,7 +198,6 @@ async def delete_product(
 
 
 @router.post("/days")
-@inject
 async def add_day(_: ActiveUserDep, data: DayCreationDTO) -> ResponseDTO[SuccessDTO]:
     day_creation_service = DayCreationService(uow=Container.uow())
     try:

@@ -3,7 +3,13 @@ from decimal import Decimal
 from enum import StrEnum
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    field_validator,
+    model_validator,
+)
 
 from models import DateRangeDTO
 
@@ -87,6 +93,11 @@ class DayProductDTO(BaseModel):
         return obj
 
 
+class UserBodyWeightDTO(BaseModel):
+    user_id: UUID
+    body_weight: Decimal | None
+
+
 class DayMeasurementUpdateDTO(BaseModel):
     body_weight: Decimal | None = None
     body_fat: Decimal | None = None
@@ -99,6 +110,12 @@ class DayMeasurementUpdateDTO(BaseModel):
         if v <= 0:
             raise ValueError("must be bigger than zero")
         return v
+
+    @model_validator(mode="after")
+    def at_least_one_field(self):
+        if self.body_weight is None and self.body_fat is None:
+            raise ValueError("At least one field must be provided")
+        return self
 
 
 class DayFullInfoDTO(BaseModel):
@@ -210,7 +227,12 @@ class UserDayProductCreationDTO(BaseModel):
 
 class DayCreationDTO(BaseModel):
     date: date
-    user_additional_calories: dict[UUID, Decimal]  # user_id -> additional_calories
+    user_additional_calories: dict[UUID, Decimal] = Field(
+        default_factory=dict
+    )  # user_id -> additional_calories
+    user_body_weight: dict[UUID, Decimal] = Field(
+        default_factory=dict
+    )  # user_id -> body_weight
     products: list[UserDayProductCreationDTO]
 
 

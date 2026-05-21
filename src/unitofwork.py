@@ -53,6 +53,7 @@ class UnitOfWork(IUnitOfWork):
         self.products = ProductRepository(self._session)
         self.day_products = DayProductRepository(self._session)
         self.settings = SettingRepository(self._session)
+        return self
 
     async def __aexit__(self, *args):
         await self.rollback()

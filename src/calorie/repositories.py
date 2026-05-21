@@ -18,6 +18,7 @@ from calorie.models import (
     OpenAIProductMatchDTO,
     ProductDTO,
     TrendItemDTO,
+    UserBodyWeightDTO,
 )
 from models import DateRangeDTO
 from repository import SQLAlchemyRepository
@@ -109,6 +110,12 @@ class DayRepository(SQLAlchemyRepository):
             for created_at, body_weight in days
         ]
 
+    @staticmethod
+    def _date_to_range(date_: date) -> tuple[datetime, datetime]:
+        start = datetime.combine(date_, datetime.min.time())
+        end = start + timedelta(days=1)
+        return start, end
+
     async def get_calorie_trend(
         self, user_id: UUID, date_range: DateRangeDTO
     ) -> list[TrendItemDTO]:
@@ -127,9 +134,84 @@ class DayRepository(SQLAlchemyRepository):
             for day in days
         ]
 
+    async def get_trend_adjacent_days(
+        self, user_id: UUID, target_date: date
+    ) -> tuple[orm.Day | None, orm.Day | None, orm.Day | None]:
+
+        start, end = self._date_to_range(target_date)
+
+        current_day = (
+            await self._session.execute(
+                select(self.model)
+                .where(self.model.user_id == user_id)
+                .where(self.model.created_at >= start)
+                .where(self.model.created_at < end)
+            )
+        ).scalar_one_or_none()
+
+        if current_day is None:
+            return None, None, None
+
+        previous_day = (
+            await self._session.execute(
+                select(self.model)
+                .where(self.model.user_id == user_id)
+                .where(self.model.created_at < current_day.created_at)
+                .where(self.model.body_weight.isnot(None))
+                .order_by(self.model.created_at.desc())
+                .limit(1)
+            )
+        ).scalar_one_or_none()
+
+        next_day = (
+            await self._session.execute(
+                select(self.model)
+                .where(self.model.user_id == user_id)
+                .where(self.model.created_at > current_day.created_at)
+                .where(self.model.body_weight.isnot(None))
+                .order_by(self.model.created_at.asc())
+                .limit(1)
+            )
+        ).scalar_one_or_none()
+
+        return previous_day, current_day, next_day
+
+    @staticmethod
+    def update_trend(
+        previous_day: orm.Day | None,
+        current_day: orm.Day | None,
+        next_day: orm.Day | None,
+    ) -> None:
+        if current_day is None or current_day.body_weight is None:
+            return
+
+        if previous_day and previous_day.body_weight is not None:
+            current_day.trend = current_day.body_weight - previous_day.body_weight
+        else:
+            current_day.trend = None
+
+        if next_day and next_day.body_weight is not None:
+            next_day.trend = next_day.body_weight - current_day.body_weight
+
+    async def get_all_by_date(self, date_: date) -> list[UserBodyWeightDTO]:
+        start, end = self._date_to_range(date_)
+
+        query = (
+            select(self.model.user_id, self.model.body_weight)
+            .where(self.model.created_at >= start)
+            .where(self.model.created_at < end)
+        )
+
+        rows = await self._session.execute(query)
+
+        return [
+            UserBodyWeightDTO(user_id=r.user_id, body_weight=r.body_weight)
+            for r in rows.mappings()
+        ]
+
     async def get_by_date(self, date_: date, **data: str | int | UUID) -> DayInDBDTO:
-        start = datetime.combine(date_, datetime.min.time())
-        end = start + timedelta(days=1)
+        start, end = self._date_to_range(date_)
+
         query = (
             select(self.model)
             .where(self.model.created_at >= start)
@@ -137,7 +219,23 @@ class DayRepository(SQLAlchemyRepository):
             .filter_by(**data)
         )
         response = await self._session.execute(query)
-        return DayInDBDTO.model_validate(response.scalar_one())
+        row = response.scalars().first()
+
+        if row is None:
+            raise NoResultFound(f"No result found for date {date_}")
+
+        return DayInDBDTO.model_validate(row)
+
+    async def get_by_id(self, *, day_id: UUID) -> orm.Day:
+        query = select(self.model).where(self.model.id == day_id)
+
+        result = await self._session.execute(query)
+        day = result.scalar_one_or_none()
+
+        if day is None:
+            raise NoResultFound(f"Day not found: {day_id}")
+
+        return day
 
     async def add(self, **insert_data) -> DayInDBDTO:
         new_model_object = self.model(**insert_data)

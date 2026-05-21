@@ -20,7 +20,7 @@ class Day(Base):
     id: Mapped[uuidpk]
     body_weight: Mapped[Decimal] = mapped_column(nullable=True)
     body_fat: Mapped[Decimal] = mapped_column(nullable=True)
-    trend: Mapped[Decimal] = mapped_column(nullable=True)  # weight trend
+    trend: Mapped[Decimal | None] = mapped_column(nullable=True)
     total_proteins: Mapped[Decimal] = mapped_column(
         nullable=False, default=Decimal("0.0")
     )
