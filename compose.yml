@@ -2,7 +2,7 @@ x-app-common: &app-common
   image: main-be:latest
   build:
     context: .
-    dockerfile: Container
+    dockerfile: Containerfile
   env_file:
     - .env
   environment:

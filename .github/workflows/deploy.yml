@@ -43,7 +43,7 @@ jobs:
       - name: Build & Push image (latest + sha)
         run: |
           IMAGE=ghcr.io/${{ github.repository }}
-          docker build -f Container -t $IMAGE:latest -t $IMAGE:${{ github.sha }} .
+          docker build -f Containerfile -t $IMAGE:latest -t $IMAGE:${{ github.sha }} .
           docker push $IMAGE:latest
           docker push $IMAGE:${{ github.sha }}
 
