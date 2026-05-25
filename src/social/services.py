@@ -1,5 +1,7 @@
 from uuid import UUID
 
+from sqlalchemy.exc import IntegrityError
+
 from auth.models import UserInfoDTO
 from social.models import TeamResponseDTO, TeamStatus
 from unitofwork import IUnitOfWork
@@ -10,22 +12,22 @@ class TeamService:
         self._uow = uow
 
     async def send_request(self, requester_id: UUID, addressee_id: UUID):
+        if requester_id == addressee_id:
+            raise ValueError("You cannot send a team request to yourself")
+
         async with self._uow:
-            if requester_id == addressee_id:
-                raise ValueError("You cannot send a team request to yourself")
+            if not await self._uow.users.exists(addressee_id):
+                raise ValueError("Cannot send request")
 
-            user = await self._uow.users.get(id=addressee_id)
-            if not user:
-                raise ValueError("User not found")
-
-            existing = await self._uow.teams.get_team(requester_id, addressee_id)
-            if existing:
+            if await self._uow.teams.exists_between(requester_id, addressee_id):
                 raise ValueError("Team already exists")
 
-            team = await self._uow.teams.create(requester_id, addressee_id)
-
-            await self._uow.commit()
-            return team
+            try:
+                team = await self._uow.teams.create(requester_id, addressee_id)
+                await self._uow.commit()
+                return team
+            except IntegrityError:
+                raise ValueError("Team already exists")
 
     async def remove_team_member(self, user_id: UUID, team_member_id: UUID):
         async with self._uow:
@@ -40,6 +42,9 @@ class TeamService:
     async def leave_team(self, user_id: UUID, team_id: UUID):
         async with self._uow:
             team = await self._uow.teams.get(id=team_id)
+
+            if user_id not in (team.requester_id, team.addressee_id):
+                raise ValueError("Not allowed")
 
             if not team or team.status != TeamStatus.ACCEPTED:
                 raise ValueError("Team does not exist")

@@ -51,10 +51,7 @@ class Container(containers.DeclarativeContainer):
     jwt_authentication_service = providers.Factory(JWTAuthenticationService, uow=uow)
     registration_service = providers.Factory(RegistrationService, uow=uow)
     user_service = providers.Factory(UserService, uow=uow)
-    team_service = providers.Factory(
-        TeamService,
-        uow=uow,
-    )
+    team_service = providers.Factory(TeamService, uow=uow)
     notification_service = providers.Factory(EmailNotificationService, uow=uow)
     app_service = providers.Factory(AppService, uow=uow)
     trend_service = providers.Factory(TrendService, uow=uow)

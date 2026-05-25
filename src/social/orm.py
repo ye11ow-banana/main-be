@@ -1,16 +1,13 @@
 from __future__ import annotations
 
 import uuid
-from typing import TYPE_CHECKING
+from enum import StrEnum
 
 from sqlalchemy import ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from database import Base, created_at, uuidpk
+from database import Base, created_at, updated_at, uuidpk
 from social.models import TeamStatus
-
-if TYPE_CHECKING:
-    pass
 
 
 class Team(Base):
@@ -26,20 +23,21 @@ class Team(Base):
         ForeignKey("users.id", ondelete="CASCADE"), nullable=False
     )
 
-    status: Mapped[str] = mapped_column(
+    status: Mapped[StrEnum] = mapped_column(
         String, default=TeamStatus.PENDING, nullable=False
     )
 
     created_at: Mapped[created_at]
+    updated_at: Mapped[updated_at]
 
     requester = relationship(
         "User",
-        foreign_keys=[requester_id],
+        foreign_keys="Team.requester_id",
         back_populates="sent_team_requests",
     )
 
     addressee = relationship(
         "User",
-        foreign_keys=[addressee_id],
+        foreign_keys="Team.addressee_id",
         back_populates="received_team_requests",
     )

@@ -33,6 +33,7 @@ def upgrade() -> None:
             server_default=sa.text("TIMEZONE('utc', now())"),
             nullable=False,
         ),
+        sa.Column("updated_at", sa.DateTime(), nullable=True),
         sa.ForeignKeyConstraint(["addressee_id"], ["users.id"], ondelete="CASCADE"),
         sa.ForeignKeyConstraint(["requester_id"], ["users.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),

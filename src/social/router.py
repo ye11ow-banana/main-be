@@ -5,6 +5,7 @@ from auth.models import UserInfoDTO
 from config.dependencies import ActiveUserDep, TeamServiceDep
 from social.models import (
     TeamActionDTO,
+    TeamMemberActionDTO,
     TeamRequestDTO,
     TeamResponseDTO,
 )
@@ -40,7 +41,7 @@ async def accept_team_request(
 ) -> ResponseDTO[SuccessDTO]:
     try:
         await service.accept_request(
-            team_id=data.team_member_id,
+            team_id=data.team_id,
             user_id=user.id,
         )
     except ValueError as e:
@@ -58,7 +59,7 @@ async def reject_team_request(
 ) -> ResponseDTO[SuccessDTO]:
     try:
         await service.reject_request(
-            team_id=data.team_member_id,
+            team_id=data.team_id,
             user_id=user.id,
         )
     except ValueError as e:
@@ -70,7 +71,7 @@ async def reject_team_request(
 @router.delete("/team/remove-member", status_code=status.HTTP_200_OK)
 @inject
 async def remove_team_member(
-    data: TeamActionDTO,
+    data: TeamMemberActionDTO,
     user: ActiveUserDep,
     service: TeamServiceDep,
 ) -> ResponseDTO[SuccessDTO]:

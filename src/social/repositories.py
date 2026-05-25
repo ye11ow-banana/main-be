@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from sqlalchemy import or_, select
+from sqlalchemy import exists, select
 
 from auth.orm import User
 from repository import SQLAlchemyRepository
@@ -21,13 +21,27 @@ class TeamRepository(SQLAlchemyRepository):
 
     async def get_team(self, user1: UUID, user2: UUID):
         stmt = select(self.model).where(
-            or_(
-                (self.model.requester_id == user1) & (self.model.addressee_id == user2),
-                (self.model.requester_id == user2) & (self.model.addressee_id == user1),
+            (
+                (self.model.requester_id == user1) & (self.model.addressee_id == user2)
+                | (self.model.requester_id == user2)
+                & (self.model.addressee_id == user1)
             )
         )
+
         result = await self._session.execute(stmt)
         return result.scalars().first()
+
+    async def exists_between(self, user1: UUID, user2: UUID) -> bool:
+        stmt = select(
+            exists().where(
+                (self.model.requester_id == user1) & (self.model.addressee_id == user2)
+                | (self.model.requester_id == user2)
+                & (self.model.addressee_id == user1)
+            )
+        )
+
+        result = await self._session.execute(stmt)
+        return result.scalar_one()
 
     async def get_user_team_members(self, user_id: UUID):
         stmt = select(self.model).where(

@@ -26,4 +26,8 @@ class TeamRequestDTO(BaseModel):
 
 
 class TeamActionDTO(BaseModel):
+    team_id: UUID
+
+
+class TeamMemberActionDTO(BaseModel):
     team_member_id: UUID
