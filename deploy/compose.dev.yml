@@ -1,10 +1,12 @@
+name: main-be
+
 x-app-common: &app-common
-  image: main-be:latest
   build:
-    context: .
-    dockerfile: Containerfile
+    context: ..
+    dockerfile: deploy/Containerfile
+    target: runtime
   env_file:
-    - .env
+    - ../.env
   environment:
     PYTHONPATH: /app/src
   depends_on:
@@ -17,12 +19,8 @@ services:
   postgres:
     image: postgres:16-alpine
     container_name: main-be-postgres
-    environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     env_file:
-      - .env
+      - ../.env
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
@@ -42,6 +40,7 @@ services:
 
   fastapi:
     <<: *app-common
+    image: main-be:latest
     container_name: main-be-fastapi
     ports:
       - "8000:8000"
@@ -49,17 +48,22 @@ services:
     develop:
       watch:
         - action: sync
-          path: ./src
+          path: ../src
           target: /app/src
         - action: rebuild
-          path: ./pyproject.toml
+          path: ../pyproject.toml
 
   develop:
     <<: *app-common
+    image: main-be-dev:latest
+    build:
+      context: ..
+      dockerfile: deploy/Containerfile
+      target: dev
     container_name: main-be-develop
     command: ["sleep", "infinity"]
     volumes:
-      - ./:/app
+      - ../:/app
 
   mailpit:
     image: axllent/mailpit:latest

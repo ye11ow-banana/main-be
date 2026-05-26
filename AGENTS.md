@@ -90,7 +90,7 @@ If `task` is unavailable, use the underlying commands:
 ruff check . --fix
 ruff format
 pytest
-docker compose run --rm develop alembic upgrade head
+docker compose -f deploy/compose.dev.yml run --rm develop alembic upgrade head
 ```
 
 Prefer `task` commands when available because they match the project workflow.

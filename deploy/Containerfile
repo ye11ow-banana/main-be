@@ -14,12 +14,28 @@ RUN apt-get update \
 
 RUN pip install --no-cache-dir uv
 
-COPY pyproject.toml uv.lock ./ 
+COPY pyproject.toml uv.lock ./
+
+FROM base AS runtime
 
 RUN uv pip install --system .
 RUN uv pip install --system "uvicorn[standard]>=0.30,<0.31"
 
-COPY alembic.ini config.toml ./ 
+COPY alembic.ini config.toml ./
+COPY migrations ./migrations
+COPY src ./src
+COPY templates ./templates
+
+EXPOSE 8000
+
+CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]
+
+FROM base AS dev
+
+RUN uv pip install --system --group dev .
+RUN uv pip install --system "uvicorn[standard]>=0.30,<0.31"
+
+COPY alembic.ini config.toml ./
 COPY migrations ./migrations
 COPY src ./src
 COPY templates ./templates

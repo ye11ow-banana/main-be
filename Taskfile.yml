@@ -10,40 +10,40 @@ tasks:
   format:
     desc: Format code
     cmds:
-      - ruff check . --fix
-      - ruff format
+      - docker compose -f deploy/compose.dev.yml run --rm develop ruff check . --fix
+      - docker compose -f deploy/compose.dev.yml run --rm develop ruff format
 
   test:
     desc: Run tests
     cmds:
-      - pytest
+      - docker compose -f deploy/compose.dev.yml run --rm develop pytest tests
 
   m:new:
     desc: Create a new Alembic migration with autogeneration
     cmds:
-      - docker compose run --rm develop alembic revision --autogenerate -m "{{.MSG}}"
+      - docker compose -f deploy/compose.dev.yml run --rm develop alembic revision --autogenerate -m "{{.MSG}}"
 
   m:upgrade:
     desc: Apply latest Alembic migrations
     cmds:
-      - docker compose run --rm develop alembic upgrade head
+      - docker compose -f deploy/compose.dev.yml run --rm develop alembic upgrade head
 
   m:downgrade:
     desc: Revert the last Alembic migration
     cmds:
-      - docker compose run --rm develop alembic downgrade "-1"
+      - docker compose -f deploy/compose.dev.yml run --rm develop alembic downgrade "-1"
 
   d:build:
     desc: Build Docker image for FastAPI services
     cmds:
-      - docker compose build fastapi
+      - docker compose -f deploy/compose.dev.yml build fastapi
 
   d:up:
     desc: Run full stack with Docker Compose
     cmds:
-      - docker compose up -d --remove-orphans
+      - docker compose -f deploy/compose.dev.yml up -d --remove-orphans
 
   d:watch:
     desc: Sync code changes into container with Compose Watch (no rebuilds for code)
     cmds:
-      - docker compose watch
+      - docker compose -f deploy/compose.dev.yml watch
