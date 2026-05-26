@@ -30,6 +30,7 @@ dependencies = [
 [dependency-groups]
 dev = [
     "pytest>=9.0.1",
+    "pytest-asyncio>=1.4.0",
     "ruff>=0.14.7",
 ]
 
@@ -83,3 +84,4 @@ docstring-code-line-length = "dynamic"
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
+asyncio_mode = "auto"

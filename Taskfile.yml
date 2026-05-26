@@ -33,17 +33,17 @@ tasks:
     cmds:
       - docker compose -f deploy/compose.dev.yml run --rm develop alembic downgrade "-1"
 
-  d:build:
+  build:
     desc: Build Docker image for FastAPI services
     cmds:
-      - docker compose -f deploy/compose.dev.yml build fastapi
+      - docker compose -f deploy/compose.dev.yml build fastapi develop
 
-  d:up:
+  up:
     desc: Run full stack with Docker Compose
     cmds:
       - docker compose -f deploy/compose.dev.yml up -d --remove-orphans
 
-  d:watch:
+  watch:
     desc: Sync code changes into container with Compose Watch (no rebuilds for code)
     cmds:
       - docker compose -f deploy/compose.dev.yml watch
