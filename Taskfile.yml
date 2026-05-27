@@ -16,7 +16,8 @@ tasks:
   test:
     desc: Run tests
     cmds:
-      - docker compose -f deploy/compose.dev.yml run --rm develop pytest tests
+      - docker compose -f deploy/compose.test.yml run --rm test
+      - docker compose -f deploy/compose.test.yml down --volumes --remove-orphans
 
   m:new:
     desc: Create a new Alembic migration with autogeneration
@@ -47,3 +48,8 @@ tasks:
     desc: Sync code changes into container with Compose Watch (no rebuilds for code)
     cmds:
       - docker compose -f deploy/compose.dev.yml watch
+
+  down:
+    desc: Stop and remove containers
+    cmds:
+      - docker compose -f deploy/compose.dev.yml down
