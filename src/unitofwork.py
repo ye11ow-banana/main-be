@@ -7,7 +7,7 @@ from app.repositories import AppRepository
 from auth.repositories import UserRepository
 from calorie.repositories import DayProductRepository, DayRepository, ProductRepository
 from notification.repositories import VerificationCodeRepository
-from setting.repositories import SettingRepository
+from setting.repositories import CalorieSettingRepository
 
 
 class IUnitOfWork(ABC):
@@ -17,7 +17,7 @@ class IUnitOfWork(ABC):
     days: DayRepository
     products: ProductRepository
     day_products: DayProductRepository
-    settings: SettingRepository
+    calorie_setting: CalorieSettingRepository
 
     @abstractmethod
     def __init__(self):
@@ -52,7 +52,7 @@ class UnitOfWork(IUnitOfWork):
         self.days = DayRepository(self._session)
         self.products = ProductRepository(self._session)
         self.day_products = DayProductRepository(self._session)
-        self.settings = SettingRepository(self._session)
+        self.calorie_setting = CalorieSettingRepository(self._session)
         return self
 
     async def __aexit__(self, *args):

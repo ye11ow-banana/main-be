@@ -16,6 +16,7 @@ from calorie.services.trend import TrendService
 from clients.s3 import S3Client
 from config import settings
 from notification.services.email import EmailNotificationService
+from setting.services import SettingService
 from unitofwork import UnitOfWork
 
 
@@ -57,4 +58,6 @@ class Container(containers.DeclarativeContainer):
         DayService, uow=uow, calorie_openai_client=calorie_openai_client
     )
     product_service = providers.Factory(ProductService, uow=uow)
+    setting_service = providers.Factory(SettingService, uow=uow)
+
     avatar_uploader = providers.Factory(AvatarUploader, uow=uow, s3_client=s3_client)
