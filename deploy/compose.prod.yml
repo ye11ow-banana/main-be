@@ -39,5 +39,8 @@ services:
     profiles: ["dev"]
 
 volumes:
+  postgres_data:
+    external: true
+    name: backend_postgres_data
   caddy_data:
   caddy_config:
