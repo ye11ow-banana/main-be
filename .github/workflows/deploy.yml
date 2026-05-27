@@ -3,6 +3,8 @@ name: Deploy Backend
 on:
   push:
     branches: ["main"]
+  pull_request:
+    branches: ["main"]
 
 jobs:
   lint:
@@ -32,6 +34,7 @@ jobs:
         run: docker compose -f deploy/compose.test.yml run --rm test
 
   deploy:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     needs: [lint, test]
     permissions:
