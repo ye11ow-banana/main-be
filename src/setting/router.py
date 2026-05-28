@@ -2,8 +2,8 @@ from dependency_injector.wiring import inject
 from fastapi import APIRouter
 
 from config.dependencies import ActiveUserDep, SettingServiceDep
-from models import ResponseDTO
-from setting.models import AllSettingsResponseDTO
+from models import ResponseDTO, SuccessDTO
+from setting.models import AllSettingsResponseDTO, UpdateSettingsRequestDTO
 
 router = APIRouter(prefix="/settings", tags=["Setting"])
 
@@ -15,3 +15,14 @@ async def get_all_settings(
 ) -> ResponseDTO[AllSettingsResponseDTO]:
     settings = await setting_service.get_all_user_settings(user)
     return ResponseDTO[AllSettingsResponseDTO](data=settings)
+
+
+@router.patch("")
+@inject
+async def update_settings(
+    user: ActiveUserDep,
+    setting_service: SettingServiceDep,
+    data: UpdateSettingsRequestDTO,
+) -> ResponseDTO[SuccessDTO]:
+    await setting_service.update_user_settings(user.id, data)
+    return ResponseDTO[SuccessDTO](data=SuccessDTO())
