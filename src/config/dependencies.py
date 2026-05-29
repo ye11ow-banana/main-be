@@ -17,6 +17,7 @@ from calorie.services.trend import TrendService
 from config.containers import Container
 from notification.services.email import EmailNotificationService
 from social.services import TeamService
+from setting.services import SettingService
 
 JWTAuthenticationDep = Annotated[
     JWTAuthenticationService, Depends(Provide[Container.jwt_authentication_service])
@@ -73,6 +74,9 @@ TrendServiceDep = Annotated[TrendService, Depends(Provide[Container.trend_servic
 DayServiceDep = Annotated[DayService, Depends(Provide[Container.day_service])]
 ProductServiceDep = Annotated[
     ProductService, Depends(Provide[Container.product_service])
+]
+SettingServiceDep = Annotated[
+    SettingService, Depends(Provide[Container.setting_service])
 ]
 AvatarUploaderDep = Annotated[
     AvatarUploader, Depends(Provide[Container.avatar_uploader])

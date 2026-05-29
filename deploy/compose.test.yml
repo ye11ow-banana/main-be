@@ -1,0 +1,37 @@
+name: main-be-test
+
+services:
+  postgres-test:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: main_be_test
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d main_be_test"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+
+  test:
+    build:
+      context: ..
+      dockerfile: deploy/Containerfile
+      target: dev
+    environment:
+      PYTHONPATH: /app/src
+      DB__HOST: postgres-test
+      DB__PORT: "5432"
+      DB__USER: postgres
+      DB__PASSWORD: postgres
+      DB__DB_NAME: main_be_test
+      SECRET_KEY: test-secret
+      OPENAI__API_KEY: ""
+    depends_on:
+      postgres-test:
+        condition: service_healthy
+    volumes:
+      - ../:/app
+    command: pytest tests

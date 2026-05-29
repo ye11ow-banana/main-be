@@ -9,6 +9,7 @@ from calorie.repositories import DayProductRepository, DayRepository, ProductRep
 from notification.repositories import VerificationCodeRepository
 from social.repositories import TeamRepository
 from setting.repositories import SettingRepository
+from setting.repositories import CalorieSettingRepository
 
 
 class IUnitOfWork(ABC):
@@ -19,7 +20,7 @@ class IUnitOfWork(ABC):
     products: ProductRepository
     day_products: DayProductRepository
     teams: TeamRepository
-    settings: SettingRepository
+    calorie_setting: CalorieSettingRepository
 
     @abstractmethod
     def __init__(self):
@@ -55,7 +56,7 @@ class UnitOfWork(IUnitOfWork):
         self.products = ProductRepository(self._session)
         self.day_products = DayProductRepository(self._session)
         self.teams = TeamRepository(self._session)
-        self.settings = SettingRepository(self._session)
+        self.calorie_setting = CalorieSettingRepository(self._session)
         return self
 
     async def __aexit__(self, *args):

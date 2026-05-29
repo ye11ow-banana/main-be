@@ -10,7 +10,7 @@ from database import Base, created_at, uuidpk
 if TYPE_CHECKING:
     from calorie.orm import Day
     from notification.orm import VerificationCode
-    from setting.orm import Setting
+    from setting.orm import CalorieSetting
 
 
 class User(Base):
@@ -42,6 +42,6 @@ class User(Base):
         "VerificationCode", back_populates="user"
     )
     days: Mapped[list["Day"]] = relationship("Day", back_populates="user")
-    settings: Mapped[list["Setting"]] = relationship(
-        "Setting", back_populates="user", cascade="all, delete-orphan"
+    calorie_setting: Mapped["CalorieSetting"] = relationship(
+        "CalorieSetting", back_populates="user", cascade="all, delete-orphan"
     )

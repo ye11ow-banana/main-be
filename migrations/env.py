@@ -15,6 +15,7 @@ from notification.orm import *
 from app.orm import *
 from calorie.orm import *
 from setting.orm import *
+from db_modules import *
 from config import settings
 from database import Base
 

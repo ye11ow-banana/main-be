@@ -137,7 +137,6 @@ class DayRepository(SQLAlchemyRepository):
     async def get_trend_adjacent_days(
         self, user_id: UUID, target_date: date
     ) -> tuple[orm.Day | None, orm.Day | None, orm.Day | None]:
-
         start, end = self._date_to_range(target_date)
 
         current_day = (

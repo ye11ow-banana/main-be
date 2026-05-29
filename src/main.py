@@ -13,6 +13,7 @@ import app.router as app_router_module
 import auth.router as auth_router_module
 import calorie.router as calorie_router_module
 import social.router as social_router_module
+import setting.router as setting_router_module
 from config import settings
 from config.containers import Container
 from models import (
@@ -49,6 +50,7 @@ container.wire(
         auth_router_module,
         app_router_module,
         calorie_router_module,
+        setting_router_module,
         "config.dependencies",
         social_router_module,
     ]
@@ -87,3 +89,4 @@ app.include_router(auth_router_module.router)
 app.include_router(social_router_module.router)
 app.include_router(app_router_module.router)
 app.include_router(calorie_router_module.router)
+app.include_router(setting_router_module.router)
