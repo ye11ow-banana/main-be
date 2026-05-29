@@ -16,8 +16,8 @@ from calorie.services.trend import TrendService
 from clients.s3 import S3Client
 from config import settings
 from notification.services.email import EmailNotificationService
-from social.services import TeamService
 from setting.services import SettingService
+from social.services import TeamService
 from unitofwork import UnitOfWork
 
 
