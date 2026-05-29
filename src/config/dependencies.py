@@ -16,8 +16,8 @@ from calorie.services.product import ProductService
 from calorie.services.trend import TrendService
 from config.containers import Container
 from notification.services.email import EmailNotificationService
-from social.services import TeamService
 from setting.services import SettingService
+from social.services import TeamService
 
 JWTAuthenticationDep = Annotated[
     JWTAuthenticationService, Depends(Provide[Container.jwt_authentication_service])
