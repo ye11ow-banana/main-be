@@ -12,8 +12,8 @@ from sentry_sdk.integrations.logging import LoggingIntegration
 import app.router as app_router_module
 import auth.router as auth_router_module
 import calorie.router as calorie_router_module
-import social.router as social_router_module
 import setting.router as setting_router_module
+import social.router as social_router_module
 from config import settings
 from config.containers import Container
 from models import (

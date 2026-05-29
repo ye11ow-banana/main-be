@@ -7,9 +7,8 @@ from app.repositories import AppRepository
 from auth.repositories import UserRepository
 from calorie.repositories import DayProductRepository, DayRepository, ProductRepository
 from notification.repositories import VerificationCodeRepository
-from social.repositories import TeamRepository
-from setting.repositories import SettingRepository
 from setting.repositories import CalorieSettingRepository
+from social.repositories import TeamRepository
 
 
 class IUnitOfWork(ABC):
