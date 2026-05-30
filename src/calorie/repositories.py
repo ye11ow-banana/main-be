@@ -273,6 +273,13 @@ class DayRepository(SQLAlchemyRepository):
         await self._session.flush()
         return DayInDBDTO.model_validate(new_model_object)
 
+    async def delete_day(self, user_id: UUID, day_id: UUID):
+        await self._session.execute(
+            delete(self.model)
+            .where(self.model.id == day_id)
+            .where(self.model.user_id == user_id)
+        )
+
 
 class ProductRepository(SQLAlchemyRepository):
     model = orm.Product

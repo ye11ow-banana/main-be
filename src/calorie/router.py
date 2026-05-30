@@ -3,7 +3,15 @@ from decimal import Decimal
 from uuid import UUID
 
 from dependency_injector.wiring import inject
-from fastapi import APIRouter, File, Form, HTTPException, Query, UploadFile, status
+from fastapi import (
+    APIRouter,
+    File,
+    Form,
+    HTTPException,
+    Query,
+    UploadFile,
+    status,
+)
 
 from calorie.models import (
     DayCreationDTO,
@@ -155,6 +163,17 @@ async def delete_day_product(
     product_id: UUID,
 ):
     await day_service.delete_day_product(user.id, day_id, product_id)
+    return ResponseDTO(data=SuccessDTO())
+
+
+@router.delete("/days/{day_id}")
+@inject
+async def delete_day(
+    day_id: UUID,
+    user: ActiveUserDep,
+    day_service: DayServiceDep,
+):
+    await day_service.delete_day(user.id, day_id)
     return ResponseDTO(data=SuccessDTO())
 
 

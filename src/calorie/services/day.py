@@ -269,6 +269,11 @@ class DayService:
                 unique_raw_names.add(unknown_item_name)
         return unique_raw_names
 
+    async def delete_day(self, user_id: UUID, day_id: UUID):
+        async with self._uow:
+            await self._uow.days.delete_day(user_id, day_id)
+            await self._uow.commit()
+
     @staticmethod
     def _normalize_raw_name(raw_name: str) -> str:
         return raw_name.strip().lower()
