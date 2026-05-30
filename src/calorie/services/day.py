@@ -93,6 +93,75 @@ class DayService:
             data=days,
         )
 
+    async def get_day_details(self, user_id: UUID, target_date: date) -> DayFullInfoDTO:
+        async with self._uow:
+            day = await self._uow.days.get_day_with_products(user_id, target_date)
+            return DayFullInfoDTO.model_validate(day)
+
+    async def update_additional_calories(
+        self, user_id: UUID, day_id: UUID, value: Decimal
+    ):
+        async with self._uow:
+            await self._uow.days.update(
+                {"id": day_id, "user_id": user_id},
+                additional_calories=value,
+            )
+
+            await self._recalculate_day(day_id)
+
+            await self._uow.commit()
+
+    async def update_day_product_weight(
+        self,
+        user_id: UUID,
+        day_id: UUID,
+        product_id: UUID,
+        weight: int,
+    ):
+        async with self._uow:
+            await self._uow.day_products.update_weight(day_id, product_id, weight)
+
+            await self._recalculate_day(day_id)
+
+            await self._uow.commit()
+
+    async def delete_day_product(self, user_id: UUID, day_id: UUID, product_id: UUID):
+        async with self._uow:
+            await self._uow.day_products.delete_product(day_id, product_id)
+
+            await self._recalculate_day(day_id)
+
+            await self._uow.commit()
+
+    async def _recalculate_day(self, day_id: UUID):
+        day = await self._uow.days.get_by_id(day_id=day_id)
+
+        products = day.day_products
+
+        total_proteins = Decimal("0")
+        total_carbs = Decimal("0")
+        total_fats = Decimal("0")
+        total_calories = Decimal("0")
+
+        for dp in products:
+            p = dp.product
+            factor = Decimal(dp.weight) / Decimal("100")
+
+            total_proteins += p.proteins * factor
+            total_carbs += p.carbs * factor
+            total_fats += p.fats * factor
+            total_calories += p.calories * factor
+
+        total_calories += day.additional_calories
+
+        await self._uow.days.update(
+            {"id": day_id},
+            total_proteins=total_proteins,
+            total_carbs=total_carbs,
+            total_fats=total_fats,
+            total_calories=total_calories,
+        )
+
     async def process_ingestion_image(
         self,
         image_bytes: bytes,

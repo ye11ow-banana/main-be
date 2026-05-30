@@ -1,4 +1,5 @@
 from datetime import date
+from decimal import Decimal
 from uuid import UUID
 
 from dependency_injector.wiring import inject
@@ -107,6 +108,54 @@ async def update_day_measurements(
 ) -> ResponseDTO[SuccessDTO]:
     await day_service.update_day(user.id, day_id, data)
     return ResponseDTO[SuccessDTO](data=SuccessDTO())
+
+
+@router.get("/days/{target_date}")
+@inject
+async def get_day_details(
+    user: ActiveUserDep,
+    day_service: DayServiceDep,
+    target_date: date,
+):
+    data = await day_service.get_day_details(user.id, target_date)
+    return ResponseDTO(data=data)
+
+
+@router.patch("/days/{day_id}/products/{product_id}")
+@inject
+async def update_day_product_weight(
+    user: ActiveUserDep,
+    day_service: DayServiceDep,
+    day_id: UUID,
+    product_id: UUID,
+    weight: int,
+):
+    await day_service.update_day_product_weight(user.id, day_id, product_id, weight)
+    return ResponseDTO(data=SuccessDTO())
+
+
+@router.patch("/days/{day_id}/additional-calories")
+@inject
+async def update_day_additional_calories(
+    user: ActiveUserDep,
+    day_service: DayServiceDep,
+    day_id: UUID,
+    value: Decimal,
+):
+    await day_service.update_additional_calories(user.id, day_id, value)
+    return ResponseDTO(data=SuccessDTO())
+
+
+@router.delete("/days/{day_id}/products/{product_id}")
+@inject
+async def delete_day_product(
+    user: ActiveUserDep,
+    day_service: DayServiceDep,
+    day_id: UUID,
+    product_id: UUID,
+):
+    await day_service.delete_day_product(user.id, day_id, product_id)
+    return ResponseDTO(data=SuccessDTO())
 
 
 @router.get("/sort_bys")
