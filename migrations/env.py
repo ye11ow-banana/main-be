@@ -9,12 +9,6 @@ from alembic import context
 
 sys.path.append(os.path.join(sys.path[0], "src"))
 
-from auth.orm import *
-from social.orm import *
-from notification.orm import *
-from app.orm import *
-from calorie.orm import *
-from setting.orm import *
 from db_modules import *
 from config import settings
 from database import Base

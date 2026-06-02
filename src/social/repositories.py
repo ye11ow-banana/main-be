@@ -20,28 +20,14 @@ class TeamRepository(SQLAlchemyRepository):
         return team
 
     async def get_team(self, user1: UUID, user2: UUID):
-        stmt = select(self.model).where(
-            (
-                (self.model.requester_id == user1) & (self.model.addressee_id == user2)
-                | (self.model.requester_id == user2)
-                & (self.model.addressee_id == user1)
-            )
-        )
-
+        stmt = select(self.model).where(self._pair_expr(user1, user2))
         result = await self._session.execute(stmt)
         return result.scalars().first()
 
     async def exists_between(self, user1: UUID, user2: UUID) -> bool:
-        stmt = select(
-            exists().where(
-                (self.model.requester_id == user1) & (self.model.addressee_id == user2)
-                | (self.model.requester_id == user2)
-                & (self.model.addressee_id == user1)
-            )
-        )
-
+        stmt = select(exists().where(self._pair_expr(user1, user2)))
         result = await self._session.execute(stmt)
-        return result.scalar_one()
+        return result.scalar() or False
 
     async def get_user_team_members(self, user_id: UUID):
         stmt = select(self.model).where(
@@ -78,7 +64,7 @@ class TeamRepository(SQLAlchemyRepository):
         )
 
         result = await self._session.execute(stmt)
-        return result.scalars().all()
+        return result.scalars().unique().all()
 
     async def get_pending_requests(self, user_id: UUID):
         stmt = select(self.model).where(
@@ -90,3 +76,8 @@ class TeamRepository(SQLAlchemyRepository):
         teams = result.scalars().all()
 
         return teams
+
+    def _pair_expr(self, user1, user2):
+        return (
+            (self.model.requester_id == user1) & (self.model.addressee_id == user2)
+        ) | ((self.model.requester_id == user2) & (self.model.addressee_id == user1))
