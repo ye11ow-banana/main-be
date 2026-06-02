@@ -160,6 +160,7 @@ class DayService:
             total_carbs=total_carbs,
             total_fats=total_fats,
             total_calories=total_calories,
+            additional_calories=day.additional_calories,
         )
 
     async def process_ingestion_image(
