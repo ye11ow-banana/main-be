@@ -124,9 +124,13 @@ async def get_day_details(
     user: ActiveUserDep,
     day_service: DayServiceDep,
     target_date: date,
-):
-    data = await day_service.get_day_details(user.id, target_date)
-    return ResponseDTO(data=data)
+) -> ResponseDTO[DayFullInfoDTO]:
+    try:
+        data = await day_service.get_day_details(user.id, target_date)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+    return ResponseDTO[DayFullInfoDTO](data=data)
 
 
 @router.patch("/days/{day_id}/products/{product_id}")
@@ -137,9 +141,9 @@ async def update_day_product_weight(
     day_id: UUID,
     product_id: UUID,
     weight: int,
-):
+) -> ResponseDTO[SuccessDTO]:
     await day_service.update_day_product_weight(user.id, day_id, product_id, weight)
-    return ResponseDTO(data=SuccessDTO())
+    return ResponseDTO[SuccessDTO](data=SuccessDTO())
 
 
 @router.patch("/days/{day_id}/additional-calories")
@@ -151,7 +155,7 @@ async def update_day_additional_calories(
     value: Decimal,
 ):
     await day_service.update_additional_calories(user.id, day_id, value)
-    return ResponseDTO(data=SuccessDTO())
+    return ResponseDTO[SuccessDTO](data=SuccessDTO())
 
 
 @router.delete("/days/{day_id}/products/{product_id}")
@@ -163,7 +167,7 @@ async def delete_day_product(
     product_id: UUID,
 ):
     await day_service.delete_day_product(user.id, day_id, product_id)
-    return ResponseDTO(data=SuccessDTO())
+    return ResponseDTO[SuccessDTO](data=SuccessDTO())
 
 
 @router.delete("/days/{day_id}")
@@ -174,7 +178,7 @@ async def delete_day(
     day_service: DayServiceDep,
 ):
     await day_service.delete_day(user.id, day_id)
-    return ResponseDTO(data=SuccessDTO())
+    return ResponseDTO[SuccessDTO](data=SuccessDTO())
 
 
 @router.get("/sort_bys")

@@ -19,6 +19,7 @@ from config.dependencies import get_authenticated_user
 from database import Base
 from main import app, container
 from setting.orm import CalorieSetting
+from tests.fakes import FakeOpenAI
 
 TEST_DATABASE_URL = (
     "postgresql+asyncpg://postgres:postgres@postgres-test:5432/main_be_test"
@@ -57,6 +58,7 @@ async def db(
     )
 
     container.async_session_maker.override(session_maker)
+    container.openai_client.override(lambda: FakeOpenAI())
 
     try:
         yield session_maker
