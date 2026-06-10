@@ -3,7 +3,7 @@ from fastapi import APIRouter
 
 from app.models import AppDTO
 from config.dependencies import ActiveUserDep, AppServiceDep
-from models import ResponseDTO
+from src.models import ResponseDTO
 
 router = APIRouter(prefix="/apps", tags=["Apps"])
 

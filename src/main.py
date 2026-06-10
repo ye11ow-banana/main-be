@@ -16,7 +16,8 @@ import setting.router as setting_router_module
 import social.router as social_router_module
 from config import settings
 from config.containers import Container
-from models import (
+from social.exceptions import TeamError
+from src.models import (
     ErrorResponseDTO,
     MessageErrorResponseDTO,
     PydanticErrorResponseDTO,
@@ -84,6 +85,16 @@ async def http_exception_handler(_: Request, exc: HTTPException):
         content=jsonable_encoder({"error": {"message": exc.detail}}),
     )
 
+
+@app.exception_handler(TeamError)
+async def team_error_handler(request: Request, exc: TeamError):
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "error_code": exc.error_code,
+            "message": exc.message,
+        },
+    )
 
 app.include_router(auth_router_module.router)
 app.include_router(social_router_module.router)

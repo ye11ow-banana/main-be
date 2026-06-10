@@ -14,10 +14,14 @@ async def test_success(client, authenticated_user, db):
         )
         session.add(team)
         await session.commit()
+        team_id = team.id
 
     response = await client.post(
         "/social/team/reject",
-        json={"team_id": str(team.id)},
+        json={"team_id": str(team_id)},
     )
 
     assert response.status_code == 200
+
+    async with db() as session:
+        assert await session.get(Team, team_id) is None

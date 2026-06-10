@@ -26,7 +26,7 @@ from config.dependencies import (
     ProductServiceDep,
     TrendServiceDep,
 )
-from models import (
+from src.models import (
     DateRangeDTO,
     NameCodeDTO,
     ObjectCreationDTO,

@@ -1,35 +1,60 @@
+from __future__ import annotations
+
+from typing import Sequence
 from uuid import UUID
 
 from sqlalchemy import exists, select
+from sqlalchemy.sql.elements import ColumnElement
 
 from auth.orm import User
+from database import Base
 from repository import SQLAlchemyRepository
 from social import orm
+from social.exceptions import TeamAlreadyExistsError, TeamError
 from social.models import TeamStatus
 
 
 class TeamRepository(SQLAlchemyRepository):
     model = orm.Team
 
-    async def create(self, requester_id: UUID, addressee_id: UUID):
-        team = await self.add(
-            requester_id=requester_id,
-            addressee_id=addressee_id,
-            status=TeamStatus.PENDING,
-        )
-        return team
+    async def create(
+        self,
+        requester_id: UUID,
+        addressee_id: UUID,
+    ) -> Base:
+        try:
+            return await self.add(
+                requester_id=requester_id,
+                addressee_id=addressee_id,
+                status=TeamStatus.PENDING,
+            )
+        except TeamError as e:
+            if "teams" in str(e) or "unique" in str(e).lower():
+                raise TeamAlreadyExistsError("Team already exists")
+            raise
 
-    async def get_team(self, user1: UUID, user2: UUID):
+    async def get_team(
+        self,
+        user1: UUID,
+        user2: UUID,
+    ) -> orm.Team | None:
         stmt = select(self.model).where(self._pair_expr(user1, user2))
         result = await self._session.execute(stmt)
         return result.scalars().first()
 
-    async def exists_between(self, user1: UUID, user2: UUID) -> bool:
+    async def exists_between(
+        self,
+        user1: UUID,
+        user2: UUID,
+    ) -> bool:
         stmt = select(exists().where(self._pair_expr(user1, user2)))
         result = await self._session.execute(stmt)
-        return result.scalar() or False
+        return bool(result.scalar() or False)
 
-    async def get_user_team_members(self, user_id: UUID):
+    async def get_user_team_members(
+        self,
+        user_id: UUID,
+    ) -> Sequence[orm.Team]:
         stmt = select(self.model).where(
             (self.model.status == TeamStatus.ACCEPTED)
             & (
@@ -38,12 +63,12 @@ class TeamRepository(SQLAlchemyRepository):
             )
         )
         result = await self._session.execute(stmt)
+        return result.scalars().all()
 
-        team_members = result.scalars().all()
-
-        return team_members
-
-    async def get_user_team_members_users(self, user_id: UUID):
+    async def get_user_team_members_users(
+        self,
+        user_id: UUID,
+    ) -> Sequence[User]:
         stmt = (
             select(User)
             .join(
@@ -66,18 +91,26 @@ class TeamRepository(SQLAlchemyRepository):
         result = await self._session.execute(stmt)
         return result.scalars().unique().all()
 
-    async def get_pending_requests(self, user_id: UUID):
+    async def get_pending_requests(
+        self,
+        user_id: UUID,
+    ) -> Sequence[orm.Team]:
         stmt = select(self.model).where(
             (self.model.addressee_id == user_id)
             & (self.model.status == TeamStatus.PENDING)
         )
         result = await self._session.execute(stmt)
+        return result.scalars().all()
 
-        teams = result.scalars().all()
-
-        return teams
-
-    def _pair_expr(self, user1, user2):
+    def _pair_expr(
+        self,
+        user1: UUID,
+        user2: UUID,
+    ) -> ColumnElement[bool]:
         return (
-            (self.model.requester_id == user1) & (self.model.addressee_id == user2)
-        ) | ((self.model.requester_id == user2) & (self.model.addressee_id == user1))
+            (self.model.requester_id == user1)
+            & (self.model.addressee_id == user2)
+        ) | (
+            (self.model.requester_id == user2)
+            & (self.model.addressee_id == user1)
+        )

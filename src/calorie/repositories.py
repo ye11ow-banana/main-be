@@ -20,8 +20,8 @@ from calorie.models import (
     TrendItemDTO,
     UserBodyWeightDTO,
 )
-from models import DateRangeDTO
 from repository import SQLAlchemyRepository
+from src.models import DateRangeDTO
 from utils import Pagination
 
 

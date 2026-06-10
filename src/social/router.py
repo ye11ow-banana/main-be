@@ -1,11 +1,10 @@
 from uuid import UUID
 
 from dependency_injector.wiring import inject
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, status
 
 from auth.models import UserInfoDTO
 from config.dependencies import ActiveUserDep, TeamServiceDep
-from social.exceptions import TeamError
 from social.models import (
     TeamActionDTO,
     TeamRequestDTO,
@@ -23,15 +22,14 @@ async def send_team_request(
     user: ActiveUserDep,
     service: TeamServiceDep,
 ) -> ResponseDTO[TeamResponseDTO]:
-    try:
-        team = await service.send_request(
-            requester_id=user.id,
-            addressee_id=data.user_id,
-        )
-    except TeamError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    team = await service.send_request(
+        requester_id=user.id,
+        addressee_id=data.user_id,
+    )
 
-    return ResponseDTO(data=TeamResponseDTO.model_validate(team))
+    return ResponseDTO(
+        data=TeamResponseDTO.model_validate(team)
+    )
 
 
 @router.post("/team/accept", status_code=status.HTTP_200_OK)
@@ -41,13 +39,10 @@ async def accept_team_request(
     user: ActiveUserDep,
     service: TeamServiceDep,
 ) -> ResponseDTO[SuccessDTO]:
-    try:
-        await service.accept_request(
-            team_id=data.team_id,
-            user_id=user.id,
-        )
-    except TeamError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    await service.accept_request(
+        team_id=data.team_id,
+        user_id=user.id,
+    )
 
     return ResponseDTO(data=SuccessDTO())
 
@@ -59,26 +54,25 @@ async def reject_team_request(
     user: ActiveUserDep,
     service: TeamServiceDep,
 ) -> ResponseDTO[SuccessDTO]:
-    try:
-        await service.reject_request(
-            team_id=data.team_id,
-            user_id=user.id,
-        )
-    except TeamError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    await service.reject_request(
+        team_id=data.team_id,
+        user_id=user.id,
+    )
 
     return ResponseDTO(data=SuccessDTO())
 
 
-@router.delete("/team/members/{team_member_id}", status_code=status.HTTP_200_OK)
+@router.delete("/team/members/{member_user_id}", status_code=status.HTTP_200_OK)
 @inject
 async def remove_team_member(
-    user: ActiveUserDep, service: TeamServiceDep, team_member_id: UUID
+    user: ActiveUserDep,
+    service: TeamServiceDep,
+    member_user_id: UUID,
 ) -> ResponseDTO[SuccessDTO]:
-    try:
-        await service.remove_team_member(user_id=user.id, team_member_id=team_member_id)
-    except TeamError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    await service.remove_team_member(
+        user_id=user.id,
+        member_user_id=member_user_id,
+    )
 
     return ResponseDTO(data=SuccessDTO())
 
@@ -88,8 +82,10 @@ async def remove_team_member(
 async def get_team_members(
     user: ActiveUserDep,
     service: TeamServiceDep,
-) -> ResponseDTO[list[UserInfoDTO]]:
-    return ResponseDTO(data=await service.get_team_members(user.id))
+) -> ResponseDTO[UserInfoDTO]:
+    return ResponseDTO(
+        data=await service.get_team_members(user.id)
+    )
 
 
 @router.get("/team/requests", status_code=status.HTTP_200_OK)
@@ -97,6 +93,6 @@ async def get_team_members(
 async def get_pending_requests(
     user: ActiveUserDep,
     service: TeamServiceDep,
-) -> ResponseDTO[list[TeamResponseDTO]]:
+) -> ResponseDTO[TeamResponseDTO]:
     requests = await service.get_requests(user.id)
     return ResponseDTO(data=requests)

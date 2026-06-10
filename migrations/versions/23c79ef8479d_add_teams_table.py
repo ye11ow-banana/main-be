@@ -10,6 +10,7 @@ from typing import Sequence, Union
 
 import sqlalchemy as sa
 from alembic import op
+from annotated_types import Timezone
 
 # revision identifiers, used by Alembic.
 revision: str = "23c79ef8479d"
@@ -39,7 +40,7 @@ def upgrade() -> None:
         ),
         sa.Column(
             "updated_at",
-            sa.DateTime(),
+            sa.DateTime(timezone=True),
             server_default=sa.text("TIMEZONE('utc', now())"),
             nullable=False,
         ),
