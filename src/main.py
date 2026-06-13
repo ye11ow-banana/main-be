@@ -96,6 +96,7 @@ async def team_error_handler(request: Request, exc: TeamError):
         },
     )
 
+
 app.include_router(auth_router_module.router)
 app.include_router(social_router_module.router)
 app.include_router(app_router_module.router)

@@ -46,6 +46,7 @@ class Team(Base):
         back_populates="received_team_requests",
     )
 
+
 Team.__table_args__ = (
     Index(
         "uq_team_unordered_pair",

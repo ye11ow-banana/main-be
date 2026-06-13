@@ -79,7 +79,9 @@ async def test_request_persists_in_db(client, authenticated_user, db):
         assert row is not None
 
 
-async def test_duplicate_request_does_not_create_second_row(client, authenticated_user, db):
+async def test_duplicate_request_does_not_create_second_row(
+    client, authenticated_user, db
+):
     other = await create_user(db)
 
     await client.post(

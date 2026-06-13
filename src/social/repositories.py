@@ -108,9 +108,5 @@ class TeamRepository(SQLAlchemyRepository):
         user2: UUID,
     ) -> ColumnElement[bool]:
         return (
-            (self.model.requester_id == user1)
-            & (self.model.addressee_id == user2)
-        ) | (
-            (self.model.requester_id == user2)
-            & (self.model.addressee_id == user1)
-        )
+            (self.model.requester_id == user1) & (self.model.addressee_id == user2)
+        ) | ((self.model.requester_id == user2) & (self.model.addressee_id == user1))

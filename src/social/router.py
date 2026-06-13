@@ -27,9 +27,7 @@ async def send_team_request(
         addressee_id=data.user_id,
     )
 
-    return ResponseDTO(
-        data=TeamResponseDTO.model_validate(team)
-    )
+    return ResponseDTO(data=TeamResponseDTO.model_validate(team))
 
 
 @router.post("/team/accept", status_code=status.HTTP_200_OK)
@@ -83,9 +81,7 @@ async def get_team_members(
     user: ActiveUserDep,
     service: TeamServiceDep,
 ) -> ResponseDTO[UserInfoDTO]:
-    return ResponseDTO(
-        data=await service.get_team_members(user.id)
-    )
+    return ResponseDTO(data=await service.get_team_members(user.id))
 
 
 @router.get("/team/requests", status_code=status.HTTP_200_OK)
