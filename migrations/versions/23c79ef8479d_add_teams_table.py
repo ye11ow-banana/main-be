@@ -10,7 +10,6 @@ from typing import Sequence, Union
 
 import sqlalchemy as sa
 from alembic import op
-from annotated_types import Timezone
 
 # revision identifiers, used by Alembic.
 revision: str = "23c79ef8479d"
