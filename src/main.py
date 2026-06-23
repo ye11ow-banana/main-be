@@ -70,7 +70,7 @@ app.add_middleware(
 async def request_validation_exception_handler(_: Request, exc: RequestValidationError):
     errors = PydanticConvertor().convert_errors(exc.errors())
     return JSONResponse(
-        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
         content=jsonable_encoder({"error": {"errors": errors}}),
     )
 

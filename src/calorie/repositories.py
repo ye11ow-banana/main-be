@@ -412,7 +412,9 @@ class DayProductRepository(SQLAlchemyRepository):
             .where(self.model.day_id == day_id)
             .where(self.model.product_id == product_id)
         )
-        await self._session.execute(query)
+        result = await self._session.execute(query)
+        if result.rowcount == 0:
+            raise NoResultFound("Day product not found")
 
     async def update_weight(self, day_id: UUID, product_id: UUID, weight: int) -> None:
         query = (
@@ -421,4 +423,6 @@ class DayProductRepository(SQLAlchemyRepository):
             .where(self.model.product_id == product_id)
             .values(weight=weight)
         )
-        await self._session.execute(query)
+        result = await self._session.execute(query)
+        if result.rowcount == 0:
+            raise NoResultFound("Day product not found")
