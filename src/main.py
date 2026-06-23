@@ -87,12 +87,14 @@ async def http_exception_handler(_: Request, exc: HTTPException):
 
 
 @app.exception_handler(TeamError)
-async def team_error_handler(request: Request, exc: TeamError):
+async def team_error_handler(_: Request, exc: TeamError):
     return JSONResponse(
         status_code=exc.status_code,
         content={
-            "error_code": exc.error_code,
-            "message": exc.message,
+            "error": {
+                "message": exc.message,
+                "error_code": exc.error_code,
+            },
         },
     )
 

@@ -49,7 +49,7 @@ class Team(Base):
 
 Team.__table_args__ = (
     Index(
-        "uq_team_unordered_pair",
+        "uq_teams_user_pair",
         func.least(Team.requester_id, Team.addressee_id),
         func.greatest(Team.requester_id, Team.addressee_id),
         unique=True,

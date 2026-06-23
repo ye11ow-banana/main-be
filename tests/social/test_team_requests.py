@@ -1,4 +1,8 @@
+import pytest
+
+from social.exceptions import TeamAlreadyExistsError
 from social.orm import Team
+from social.repositories import TeamRepository
 from tests.helpers import create_user
 
 
@@ -40,6 +44,12 @@ async def test_duplicate_request_fails(client, authenticated_user, db):
     )
 
     assert response.status_code == 400
+    assert response.json() == {
+        "error": {
+            "message": "Team already exists",
+            "error_code": "TEAM_ALREADY_EXISTS",
+        }
+    }
 
 
 async def test_reverse_duplicate_request_fails(client, authenticated_user, db):
@@ -105,3 +115,18 @@ async def test_duplicate_request_does_not_create_second_row(
         )
         rows = result.fetchall()
         assert len(rows) == 1
+
+
+async def test_repository_duplicate_flush_raises_team_already_exists(
+    authenticated_user, db
+):
+    other = await create_user(db)
+
+    async with db() as session:
+        repository = TeamRepository(session)
+
+        await repository.create(authenticated_user.id, other.id)
+        await session.flush()
+
+        with pytest.raises(TeamAlreadyExistsError):
+            await repository.create(other.id, authenticated_user.id)

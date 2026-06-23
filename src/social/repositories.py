@@ -4,13 +4,14 @@ from typing import Sequence
 from uuid import UUID
 
 from sqlalchemy import exists, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.sql.elements import ColumnElement
 
 from auth.orm import User
 from database import Base
 from repository import SQLAlchemyRepository
 from social import orm
-from social.exceptions import TeamAlreadyExistsError, TeamError
+from social.exceptions import TeamAlreadyExistsError
 from social.models import TeamStatus
 
 
@@ -28,10 +29,8 @@ class TeamRepository(SQLAlchemyRepository):
                 addressee_id=addressee_id,
                 status=TeamStatus.PENDING,
             )
-        except TeamError as e:
-            if "teams" in str(e) or "unique" in str(e).lower():
-                raise TeamAlreadyExistsError("Team already exists")
-            raise
+        except IntegrityError as e:
+            raise TeamAlreadyExistsError("Team already exists") from e
 
     async def get_team(
         self,
