@@ -2,7 +2,7 @@ from datetime import date, datetime, timedelta
 from decimal import Decimal
 from uuid import UUID
 
-from sqlalchemy import case, func, select
+from sqlalchemy import case, delete, func, select, update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import selectinload
@@ -74,23 +74,28 @@ class DayRepository(SQLAlchemyRepository):
     async def get_first_and_last(
         self, /, **data: str | int | UUID
     ) -> tuple[DayInDBDTO, DayInDBDTO]:
-        query = (
+        base_query = (
             select(self.model)
+            .options(
+                selectinload(self.model.day_products).selectinload(
+                    orm.DayProduct.product
+                )
+            )
             .filter_by(**data)
-            .order_by(self.model.created_at.asc())
-            .limit(1)
         )
-        response = await self._session.execute(query)
-        first = response.scalar_one()
-        query = (
-            select(self.model)
-            .filter_by(**data)
-            .order_by(self.model.created_at.desc())
-            .limit(1)
+
+        first_stmt = base_query.order_by(self.model.created_at.asc()).limit(1)
+        first_res = await self._session.execute(first_stmt)
+        first = first_res.scalar_one()
+
+        last_stmt = base_query.order_by(self.model.created_at.desc()).limit(1)
+        last_res = await self._session.execute(last_stmt)
+        last = last_res.scalar_one()
+
+        return (
+            DayInDBDTO.model_validate(first),
+            DayInDBDTO.model_validate(last),
         )
-        response = await self._session.execute(query)
-        last = response.scalar_one()
-        return DayInDBDTO.model_validate(first), DayInDBDTO.model_validate(last)
 
     async def get_weight_trend(
         self, user_id: UUID, date_range: DateRangeDTO
@@ -192,6 +197,33 @@ class DayRepository(SQLAlchemyRepository):
         if next_day and next_day.body_weight is not None:
             next_day.trend = next_day.body_weight - current_day.body_weight
 
+    async def get_day_with_products(
+        self,
+        user_id: UUID,
+        target_date: date,
+    ) -> DayFullInfoDTO:
+        start, end = self._date_to_range(target_date)
+
+        query = (
+            select(self.model)
+            .options(
+                selectinload(self.model.day_products).selectinload(
+                    orm.DayProduct.product
+                )
+            )
+            .where(self.model.user_id == user_id)
+            .where(self.model.created_at >= start)
+            .where(self.model.created_at < end)
+        )
+
+        result = await self._session.execute(query)
+        day = result.scalar_one_or_none()
+
+        if day is None:
+            raise NoResultFound("Day not found")
+
+        return DayFullInfoDTO.model_validate(day)
+
     async def get_all_by_date(self, date_: date) -> list[UserBodyWeightDTO]:
         start, end = self._date_to_range(date_)
 
@@ -225,8 +257,25 @@ class DayRepository(SQLAlchemyRepository):
 
         return DayInDBDTO.model_validate(row)
 
-    async def get_by_id(self, *, day_id: UUID) -> orm.Day:
-        query = select(self.model).where(self.model.id == day_id)
+    async def get_day_products_by_id(self, day_id: UUID):
+        query = (
+            select(orm.DayProduct.weight, orm.Product)
+            .join(orm.Product)
+            .where(orm.DayProduct.day_id == day_id)
+        )
+        res = await self._session.execute(query)
+        return res.all()
+
+    async def get_by_id(self, *, day_id: UUID) -> DayInDBDTO:
+        query = (
+            select(self.model)
+            .options(
+                selectinload(self.model.day_products).selectinload(
+                    orm.DayProduct.product
+                )
+            )
+            .where(self.model.id == day_id)
+        )
 
         result = await self._session.execute(query)
         day = result.scalar_one_or_none()
@@ -234,13 +283,7 @@ class DayRepository(SQLAlchemyRepository):
         if day is None:
             raise NoResultFound(f"Day not found: {day_id}")
 
-        return day
-
-    async def add(self, **insert_data) -> DayInDBDTO:
-        new_model_object = self.model(**insert_data)
-        self._session.add(new_model_object)
-        await self._session.flush()
-        return DayInDBDTO.model_validate(new_model_object)
+        return DayInDBDTO.model_validate(day)
 
 
 class ProductRepository(SQLAlchemyRepository):
@@ -362,3 +405,24 @@ class DayProductRepository(SQLAlchemyRepository):
         )
 
         await self._session.execute(upsert_stmt)
+
+    async def delete_product(self, day_id: UUID, product_id: UUID) -> None:
+        query = (
+            delete(self.model)
+            .where(self.model.day_id == day_id)
+            .where(self.model.product_id == product_id)
+        )
+        result = await self._session.execute(query)
+        if result.rowcount == 0:
+            raise NoResultFound("Day product not found")
+
+    async def update_weight(self, day_id: UUID, product_id: UUID, weight: int) -> None:
+        query = (
+            update(self.model)
+            .where(self.model.day_id == day_id)
+            .where(self.model.product_id == product_id)
+            .values(weight=weight)
+        )
+        result = await self._session.execute(query)
+        if result.rowcount == 0:
+            raise NoResultFound("Day product not found")

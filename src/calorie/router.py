@@ -1,8 +1,18 @@
 from datetime import date
+from decimal import Decimal
 from uuid import UUID
 
 from dependency_injector.wiring import inject
-from fastapi import APIRouter, File, Form, HTTPException, Query, UploadFile, status
+from fastapi import (
+    APIRouter,
+    File,
+    Form,
+    HTTPException,
+    Query,
+    UploadFile,
+    status,
+)
+from sqlalchemy.exc import NoResultFound
 
 from calorie.models import (
     DayCreationDTO,
@@ -38,6 +48,14 @@ from models import (
 from utils import Pagination
 
 router = APIRouter(prefix="/calorie", tags=["Calorie"])
+
+
+def _raise_day_mutation_http_error(exc: Exception) -> None:
+    if isinstance(exc, NoResultFound):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)
+        ) from exc
+    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc)) from exc
 
 
 @router.get("/trend/items")
@@ -106,6 +124,78 @@ async def update_day_measurements(
     data: DayMeasurementUpdateDTO,
 ) -> ResponseDTO[SuccessDTO]:
     await day_service.update_day(user.id, day_id, data)
+    return ResponseDTO[SuccessDTO](data=SuccessDTO())
+
+
+@router.get("/days/{target_date}")
+@inject
+async def get_day_details(
+    user: ActiveUserDep,
+    day_service: DayServiceDep,
+    target_date: date,
+) -> ResponseDTO[DayFullInfoDTO]:
+    try:
+        data = await day_service.get_day_details(user.id, target_date)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+    return ResponseDTO[DayFullInfoDTO](data=data)
+
+
+@router.patch("/days/{day_id}/products/{product_id}")
+@inject
+async def update_day_product_weight(
+    user: ActiveUserDep,
+    day_service: DayServiceDep,
+    day_id: UUID,
+    product_id: UUID,
+    weight: int = Query(gt=0),
+) -> ResponseDTO[SuccessDTO]:
+    try:
+        await day_service.update_day_product_weight(user.id, day_id, product_id, weight)
+    except (NoResultFound, ValueError) as e:
+        _raise_day_mutation_http_error(e)
+    return ResponseDTO[SuccessDTO](data=SuccessDTO())
+
+
+@router.patch("/days/{day_id}/additional-calories")
+@inject
+async def update_day_additional_calories(
+    user: ActiveUserDep,
+    day_service: DayServiceDep,
+    day_id: UUID,
+    value: Decimal,
+):
+    try:
+        await day_service.update_additional_calories(user.id, day_id, value)
+    except (NoResultFound, ValueError) as e:
+        _raise_day_mutation_http_error(e)
+    return ResponseDTO[SuccessDTO](data=SuccessDTO())
+
+
+@router.delete("/days/{day_id}/products/{product_id}")
+@inject
+async def delete_day_product(
+    user: ActiveUserDep,
+    day_service: DayServiceDep,
+    day_id: UUID,
+    product_id: UUID,
+):
+    try:
+        await day_service.delete_day_product(user.id, day_id, product_id)
+    except (NoResultFound, ValueError) as e:
+        _raise_day_mutation_http_error(e)
+    return ResponseDTO[SuccessDTO](data=SuccessDTO())
+
+
+@router.delete("/days/{day_id}")
+@inject
+async def delete_day(
+    day_id: UUID,
+    user: ActiveUserDep,
+    day_service: DayServiceDep,
+):
+    await day_service.delete_day(user.id, day_id)
     return ResponseDTO[SuccessDTO](data=SuccessDTO())
 
 

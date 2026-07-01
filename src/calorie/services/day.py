@@ -7,6 +7,7 @@ from sqlalchemy.exc import NoResultFound
 
 from calorie.models import (
     DayFullInfoDTO,
+    DayInDBDTO,
     DayMeasurementUpdateDTO,
     DaysFilterDTO,
     IngestResponseDTO,
@@ -16,7 +17,6 @@ from calorie.models import (
     UserBodyWeightDTO,
 )
 from calorie.openai_client.client import CalorieOpenAIClient
-from calorie.orm import Day
 from config import settings
 from models import DateRangeDTO, PaginationDTO
 from unitofwork import IUnitOfWork
@@ -34,7 +34,7 @@ class DayService:
         async with self._uow:
             update_data = data.model_dump(exclude_unset=True)
 
-            day: Day = await self._uow.days.get_by_id(day_id=day_id)
+            day: DayInDBDTO = await self._uow.days.get_by_id(day_id=day_id)
 
             await self._uow.days.update(
                 {"id": day_id, "user_id": user_id}, **update_data
@@ -93,6 +93,82 @@ class DayService:
             data=days,
         )
 
+    async def get_day_details(self, user_id: UUID, target_date: date) -> DayFullInfoDTO:
+        async with self._uow:
+            try:
+                day = await self._uow.days.get_day_with_products(user_id, target_date)
+            except NoResultFound:
+                raise ValueError("Day not found")
+
+            return DayFullInfoDTO.model_validate(day)
+
+    async def update_additional_calories(
+        self, user_id: UUID, day_id: UUID, value: Decimal
+    ):
+        async with self._uow:
+            day: DayInDBDTO = await self._uow.days.get_by_id(day_id=day_id)
+
+            if day.user_id != user_id:
+                raise ValueError("Forbidden")
+
+            await self._uow.days.update(
+                {"id": day_id},
+                additional_calories=value,
+                total_calories=day.total_calories - day.additional_calories + value,
+            )
+
+            await self._uow.commit()
+
+    async def update_day_product_weight(
+        self,
+        user_id: UUID,
+        day_id: UUID,
+        product_id: UUID,
+        weight: int,
+    ):
+        async with self._uow:
+            day: DayInDBDTO = await self._uow.days.get_by_id(day_id=day_id)
+
+            if day.user_id != user_id:
+                raise ValueError("Forbidden")
+
+            await self._uow.day_products.update_weight(day_id, product_id, weight)
+
+            proteins, carbs, fats, calories = await self._recalculate_macros(day_id)
+
+            await self._update_day_totals(
+                day_id,
+                proteins,
+                carbs,
+                fats,
+                calories,
+                day.additional_calories,
+            )
+
+            await self._uow.commit()
+
+    async def delete_day_product(self, user_id: UUID, day_id: UUID, product_id: UUID):
+        async with self._uow:
+            day: DayInDBDTO = await self._uow.days.get_by_id(day_id=day_id)
+
+            if day.user_id != user_id:
+                raise ValueError("Forbidden")
+
+            await self._uow.day_products.delete_product(day_id, product_id)
+
+            proteins, carbs, fats, calories = await self._recalculate_macros(day_id)
+
+            await self._update_day_totals(
+                day_id,
+                proteins,
+                carbs,
+                fats,
+                calories,
+                day.additional_calories,
+            )
+
+            await self._uow.commit()
+
     async def process_ingestion_image(
         self,
         image_bytes: bytes,
@@ -122,6 +198,47 @@ class DayService:
             products=resolved,
             warnings=image_data.warnings,
             unparsed=image_data.unparsed,
+        )
+
+    async def _recalculate_macros(self, day_id: UUID):
+        rows = await self._uow.days.get_day_products_by_id(day_id)
+
+        total_proteins = Decimal("0")
+        total_carbs = Decimal("0")
+        total_fats = Decimal("0")
+        total_calories = Decimal("0")
+
+        for weight, product in rows:
+            factor = Decimal(weight) / Decimal("100")
+
+            total_proteins += product.proteins * factor
+            total_carbs += product.carbs * factor
+            total_fats += product.fats * factor
+            total_calories += product.calories * factor
+
+        return (
+            total_proteins,
+            total_carbs,
+            total_fats,
+            total_calories,
+        )
+
+    async def _update_day_totals(
+        self,
+        day_id: UUID,
+        proteins: Decimal,
+        carbs: Decimal,
+        fats: Decimal,
+        calories: Decimal,
+        additional_calories: Decimal,
+    ):
+        await self._uow.days.update(
+            {"id": day_id},
+            total_proteins=proteins,
+            total_carbs=carbs,
+            total_fats=fats,
+            total_calories=calories + additional_calories,
+            additional_calories=additional_calories,
         )
 
     async def _process_unknown_products(
@@ -199,6 +316,11 @@ class DayService:
             if unknown_item_name not in unique_raw_names:
                 unique_raw_names.add(unknown_item_name)
         return unique_raw_names
+
+    async def delete_day(self, user_id: UUID, day_id: UUID):
+        async with self._uow:
+            await self._uow.days.remove(id=day_id, user_id=user_id)
+            await self._uow.commit()
 
     @staticmethod
     def _normalize_raw_name(raw_name: str) -> str:
