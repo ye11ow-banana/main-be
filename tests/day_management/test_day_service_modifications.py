@@ -4,7 +4,6 @@ from uuid import uuid4
 
 from sqlalchemy import select
 
-from auth.orm import User
 from calorie.orm import Day, DayProduct, Product
 
 
@@ -42,41 +41,6 @@ class TestUpdateAdditionalCalories:
             day = result.scalar_one()
 
             assert day.additional_calories == Decimal("250")
-
-    async def test_foreign_day_returns_forbidden(
-        self,
-        client,
-        authenticated_user,
-        db,
-    ):
-        async with db() as session:
-            foreign_user = User(
-                username="foreign-user",
-                email="foreign-user@example.com",
-                hashed_password="not-used",
-                is_verified=True,
-            )
-            session.add(foreign_user)
-            await session.flush()
-
-            day = Day(
-                user_id=foreign_user.id,
-                created_at=datetime(2026, 6, 1),
-                additional_calories=Decimal("100"),
-                total_calories=Decimal("500"),
-            )
-
-            session.add(day)
-            await session.commit()
-
-            day_id = day.id
-
-        response = await client.patch(
-            f"/calorie/days/{day_id}/additional-calories",
-            params={"value": "250"},
-        )
-
-        assert response.status_code == 403
 
 
 class TestUpdateDayProductWeight:

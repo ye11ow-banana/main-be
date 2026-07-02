@@ -166,15 +166,15 @@ async def update_day_product_weight(
 @router.patch("/days/{day_id}/additional-calories")
 @inject
 async def update_day_additional_calories(
-    user: ActiveUserDep,
+    _: ActiveUserDep,
     day_service: DayServiceDep,
     day_id: UUID,
     value: Decimal,
 ):
     try:
-        await day_service.update_additional_calories(user.id, day_id, value)
-    except (NoResultFound, ValueError) as e:
-        _raise_day_mutation_http_error(e)
+        await day_service.update_additional_calories(day_id, value)
+    except NoResultFound as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
     return ResponseDTO[SuccessDTO](data=SuccessDTO())
 
 

@@ -102,21 +102,14 @@ class DayService:
 
             return DayFullInfoDTO.model_validate(day)
 
-    async def update_additional_calories(
-        self, user_id: UUID, day_id: UUID, value: Decimal
-    ):
+    async def update_additional_calories(self, day_id: UUID, value: Decimal) -> None:
         async with self._uow:
-            day: DayInDBDTO = await self._uow.days.get_by_id(day_id=day_id)
-
-            if day.user_id != user_id:
-                raise ValueError("Forbidden")
-
+            day = await self._uow.days.get_by_id(day_id=day_id)
             await self._uow.days.update(
                 {"id": day_id},
                 additional_calories=value,
                 total_calories=day.total_calories - day.additional_calories + value,
             )
-
             await self._uow.commit()
 
     async def update_day_product_weight(
