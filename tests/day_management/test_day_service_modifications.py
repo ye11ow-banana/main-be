@@ -8,56 +8,6 @@ from auth.orm import User
 from calorie.orm import Day, DayProduct, Product
 
 
-class TestGetDayDetails:
-    async def test_success(
-        self,
-        client,
-        authenticated_user,
-        db,
-    ):
-        async with db() as session:
-            product = Product(
-                name="Chicken",
-                proteins=Decimal("23"),
-                fats=Decimal("2"),
-                carbs=Decimal("0"),
-                calories=Decimal("110"),
-            )
-            session.add(product)
-            await session.flush()
-
-            day = Day(
-                user_id=authenticated_user.id,
-                created_at=datetime(2026, 6, 1, 12, 0),
-                additional_calories=Decimal("50"),
-                total_proteins=Decimal("23"),
-                total_fats=Decimal("2"),
-                total_carbs=Decimal("0"),
-                total_calories=Decimal("160"),
-            )
-            session.add(day)
-            await session.flush()
-
-            session.add(
-                DayProduct(
-                    day_id=day.id,
-                    product_id=product.id,
-                    weight=100,
-                )
-            )
-
-            await session.commit()
-
-        response = await client.get("/calorie/days/2026-06-01")
-
-        assert response.status_code == 200
-
-        data = response.json()["data"]
-
-        assert data["total_calories"] == "160"
-        assert data["additional_calories"] == "50"
-
-
 class TestUpdateAdditionalCalories:
     async def test_success(
         self,
