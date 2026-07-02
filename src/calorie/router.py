@@ -27,6 +27,7 @@ from calorie.models import (
     TrendItemDTO,
     TrendTypeEnum,
     UserBodyWeightDTO,
+    UserDayFullInfoDTO,
 )
 from calorie.services.day_creation import DayCreationService
 from config.containers import Container
@@ -35,6 +36,7 @@ from config.dependencies import (
     DayServiceDep,
     ProductServiceDep,
     TrendServiceDep,
+    UserServiceDep,
 )
 from models import (
     DateRangeDTO,
@@ -130,16 +132,19 @@ async def update_day_measurements(
 @router.get("/days/{target_date}")
 @inject
 async def get_day_details(
-    user: ActiveUserDep,
+    _: ActiveUserDep,
     day_service: DayServiceDep,
+    user_service: UserServiceDep,
     target_date: date,
-) -> ResponseDTO[DayFullInfoDTO]:
-    try:
-        data = await day_service.get_day_details(user.id, target_date)
-    except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
-
-    return ResponseDTO[DayFullInfoDTO](data=data)
+) -> ResponseDTO[UserDayFullInfoDTO]:
+    days = []
+    for user in await user_service.get_users():
+        try:
+            data = await day_service.get_day_details(user.id, target_date)
+        except ValueError:
+            data = None
+        days.append(UserDayFullInfoDTO(user_id=user.id, day=data))
+    return ResponseDTO[UserDayFullInfoDTO](data=days)
 
 
 @router.patch("/days/{day_id}/products/{product_id}")
