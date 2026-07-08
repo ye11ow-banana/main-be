@@ -16,12 +16,12 @@ import setting.router as setting_router_module
 import social.router as social_router_module
 from config import settings
 from config.containers import Container
-from social.exceptions import TeamError
-from src.models import (
+from models import (
     ErrorResponseDTO,
     MessageErrorResponseDTO,
     PydanticErrorResponseDTO,
 )
+from social.exceptions import TeamError
 from utils import PydanticConvertor
 
 app = FastAPI(

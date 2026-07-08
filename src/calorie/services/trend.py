@@ -1,7 +1,7 @@
 from uuid import UUID
 
 from calorie.models import TrendItemDTO
-from src.models import DateRangeDTO
+from models import DateRangeDTO
 from unitofwork import IUnitOfWork
 
 

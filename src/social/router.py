@@ -5,12 +5,12 @@ from fastapi import APIRouter, status
 
 from auth.models import UserInfoDTO
 from config.dependencies import ActiveUserDep, TeamServiceDep
+from models import ResponseDTO, SuccessDTO
 from social.models import (
     TeamActionDTO,
     TeamRequestDTO,
     TeamResponseDTO,
 )
-from src.models import ResponseDTO, SuccessDTO
 
 router = APIRouter(prefix="/social", tags=["Social"])
 

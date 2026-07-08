@@ -2,8 +2,8 @@ from dependency_injector.wiring import inject
 from fastapi import APIRouter
 
 from config.dependencies import ActiveUserDep, SettingServiceDep
+from models import ResponseDTO, SuccessDTO
 from setting.models import AllSettingsResponseDTO, UpdateSettingsRequestDTO
-from src.models import ResponseDTO, SuccessDTO
 
 router = APIRouter(prefix="/settings", tags=["Setting"])
 

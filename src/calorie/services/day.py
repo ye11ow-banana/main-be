@@ -18,7 +18,7 @@ from calorie.models import (
 )
 from calorie.openai_client.client import CalorieOpenAIClient
 from config import settings
-from src.models import DateRangeDTO, PaginationDTO
+from models import DateRangeDTO, PaginationDTO
 from unitofwork import IUnitOfWork
 from utils import Pagination, this_month_range
 

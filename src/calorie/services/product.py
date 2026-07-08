@@ -3,7 +3,7 @@ from uuid import UUID
 from sqlalchemy.exc import IntegrityError
 
 from calorie.models import ProductCreationDTO, ProductDTO
-from src.models import PaginationDTO
+from models import PaginationDTO
 from unitofwork import IUnitOfWork
 from utils import Pagination
 

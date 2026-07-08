@@ -11,7 +11,7 @@ from pydantic import (
     model_validator,
 )
 
-from src.models import DateRangeDTO
+from models import DateRangeDTO
 
 
 class TrendTypeEnum(StrEnum):

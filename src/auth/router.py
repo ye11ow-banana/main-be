@@ -25,7 +25,7 @@ from config.dependencies import (
     RegistrationDep,
     UserServiceDep,
 )
-from src.models import ResponseDTO, SuccessDTO
+from models import ResponseDTO, SuccessDTO
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 

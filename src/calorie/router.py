@@ -38,7 +38,7 @@ from config.dependencies import (
     TrendServiceDep,
     UserServiceDep,
 )
-from src.models import (
+from models import (
     DateRangeDTO,
     NameCodeDTO,
     ObjectCreationDTO,
