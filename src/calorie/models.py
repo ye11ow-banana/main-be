@@ -240,3 +240,8 @@ class DayProductCreationDTO(BaseModel):
     day_id: UUID | None
     product_id: UUID
     weight: int
+
+
+class UserDayFullInfoDTO(BaseModel):
+    user_id: UUID
+    day: DayFullInfoDTO | None
