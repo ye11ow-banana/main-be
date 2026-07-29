@@ -114,21 +114,14 @@ class DayService:
 
     async def update_day_product_weight(
         self,
-        user_id: UUID,
         day_id: UUID,
         product_id: UUID,
         weight: int,
     ):
         async with self._uow:
             day: DayInDBDTO = await self._uow.days.get_by_id(day_id=day_id)
-
-            if day.user_id != user_id:
-                raise ValueError("Forbidden")
-
             await self._uow.day_products.update_weight(day_id, product_id, weight)
-
             proteins, carbs, fats, calories = await self._recalculate_macros(day_id)
-
             await self._update_day_totals(
                 day_id,
                 proteins,
@@ -137,20 +130,13 @@ class DayService:
                 calories,
                 day.additional_calories,
             )
-
             await self._uow.commit()
 
-    async def delete_day_product(self, user_id: UUID, day_id: UUID, product_id: UUID):
+    async def delete_day_product(self, day_id: UUID, product_id: UUID):
         async with self._uow:
             day: DayInDBDTO = await self._uow.days.get_by_id(day_id=day_id)
-
-            if day.user_id != user_id:
-                raise ValueError("Forbidden")
-
             await self._uow.day_products.delete_product(day_id, product_id)
-
             proteins, carbs, fats, calories = await self._recalculate_macros(day_id)
-
             await self._update_day_totals(
                 day_id,
                 proteins,
@@ -159,7 +145,6 @@ class DayService:
                 calories,
                 day.additional_calories,
             )
-
             await self._uow.commit()
 
     async def process_ingestion_image(

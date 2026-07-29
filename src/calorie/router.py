@@ -52,14 +52,6 @@ from utils import Pagination
 router = APIRouter(prefix="/calorie", tags=["Calorie"])
 
 
-def _raise_day_mutation_http_error(exc: Exception) -> None:
-    if isinstance(exc, NoResultFound):
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)
-        ) from exc
-    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc)) from exc
-
-
 @router.get("/trend/items")
 @inject
 async def get_trend_items(
@@ -150,16 +142,16 @@ async def get_day_details(
 @router.patch("/days/{day_id}/products/{product_id}")
 @inject
 async def update_day_product_weight(
-    user: ActiveUserDep,
+    _: ActiveUserDep,
     day_service: DayServiceDep,
     day_id: UUID,
     product_id: UUID,
     weight: int = Query(gt=0),
 ) -> ResponseDTO[SuccessDTO]:
     try:
-        await day_service.update_day_product_weight(user.id, day_id, product_id, weight)
-    except (NoResultFound, ValueError) as e:
-        _raise_day_mutation_http_error(e)
+        await day_service.update_day_product_weight(day_id, product_id, weight)
+    except NoResultFound as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
     return ResponseDTO[SuccessDTO](data=SuccessDTO())
 
 
@@ -181,15 +173,15 @@ async def update_day_additional_calories(
 @router.delete("/days/{day_id}/products/{product_id}")
 @inject
 async def delete_day_product(
-    user: ActiveUserDep,
+    _: ActiveUserDep,
     day_service: DayServiceDep,
     day_id: UUID,
     product_id: UUID,
 ):
     try:
-        await day_service.delete_day_product(user.id, day_id, product_id)
-    except (NoResultFound, ValueError) as e:
-        _raise_day_mutation_http_error(e)
+        await day_service.delete_day_product(day_id, product_id)
+    except NoResultFound as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
     return ResponseDTO[SuccessDTO](data=SuccessDTO())
 
 
