@@ -8,6 +8,7 @@ from auth.repositories import UserRepository
 from calorie.repositories import DayProductRepository, DayRepository, ProductRepository
 from notification.repositories import VerificationCodeRepository
 from setting.repositories import CalorieSettingRepository
+from social.repositories import TeamRepository
 
 
 class IUnitOfWork(ABC):
@@ -17,6 +18,7 @@ class IUnitOfWork(ABC):
     days: DayRepository
     products: ProductRepository
     day_products: DayProductRepository
+    teams: TeamRepository
     calorie_setting: CalorieSettingRepository
 
     @abstractmethod
@@ -52,6 +54,7 @@ class UnitOfWork(IUnitOfWork):
         self.days = DayRepository(self._session)
         self.products = ProductRepository(self._session)
         self.day_products = DayProductRepository(self._session)
+        self.teams = TeamRepository(self._session)
         self.calorie_setting = CalorieSettingRepository(self._session)
         return self
 
