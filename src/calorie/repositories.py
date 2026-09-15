@@ -75,9 +75,7 @@ class DayRepository(SQLAlchemyRepository):
         query = select(
             func.min(self.model.created_at).label("start_date"),
             func.max(self.model.created_at).label("end_date"),
-        ).where(
-            self.model.user_id == user_id
-        )
+        ).where(self.model.user_id == user_id)
 
         result = (await self._session.execute(query)).one()
 
