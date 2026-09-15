@@ -13,6 +13,7 @@ import app.router as app_router_module
 import auth.router as auth_router_module
 import calorie.router as calorie_router_module
 import setting.router as setting_router_module
+import social.router as social_router_module
 from config import settings
 from config.containers import Container
 from models import (
@@ -20,6 +21,7 @@ from models import (
     MessageErrorResponseDTO,
     PydanticErrorResponseDTO,
 )
+from social.exceptions import TeamError
 from utils import PydanticConvertor
 
 app = FastAPI(
@@ -51,6 +53,7 @@ container.wire(
         calorie_router_module,
         setting_router_module,
         "config.dependencies",
+        social_router_module,
     ]
 )
 app.container = container
@@ -83,7 +86,21 @@ async def http_exception_handler(_: Request, exc: HTTPException):
     )
 
 
+@app.exception_handler(TeamError)
+async def team_error_handler(_: Request, exc: TeamError):
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "error": {
+                "message": exc.message,
+                "error_code": exc.error_code,
+            },
+        },
+    )
+
+
 app.include_router(auth_router_module.router)
+app.include_router(social_router_module.router)
 app.include_router(app_router_module.router)
 app.include_router(calorie_router_module.router)
 app.include_router(setting_router_module.router)

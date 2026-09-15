@@ -1,7 +1,7 @@
 from typing import Sequence
 from uuid import UUID
 
-from sqlalchemy import or_, select
+from sqlalchemy import exists, or_, select
 
 from auth import orm
 from auth.models import UserInDBDTO, UserInfoDTO
@@ -39,6 +39,11 @@ class UserRepository(SQLAlchemyRepository):
             return None
 
         return UserInDBDTO.model_validate(user)
+
+    async def exists(self, user_id: UUID) -> bool:
+        stmt = select(exists().where(self.model.id == user_id))
+        result = await self._session.execute(stmt)
+        return result.scalar_one()
 
     async def get_all_verified(
         self, /, returns: Sequence[str] | None = None, **data: str | int | UUID

@@ -17,6 +17,7 @@ from calorie.services.trend import TrendService
 from config.containers import Container
 from notification.services.email import EmailNotificationService
 from setting.services import SettingService
+from social.services import TeamService
 
 JWTAuthenticationDep = Annotated[
     JWTAuthenticationService, Depends(Provide[Container.jwt_authentication_service])
@@ -67,6 +68,7 @@ def active_user(user: AuthenticatedUserDep) -> UserInfoDTO:
 
 
 ActiveUserDep = Annotated[UserInfoDTO, Depends(active_user)]
+TeamServiceDep = Annotated[TeamService, Depends(Provide[Container.team_service])]
 AppServiceDep = Annotated[AppService, Depends(Provide[Container.app_service])]
 TrendServiceDep = Annotated[TrendService, Depends(Provide[Container.trend_service])]
 DayServiceDep = Annotated[DayService, Depends(Provide[Container.day_service])]
