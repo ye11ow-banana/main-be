@@ -71,30 +71,22 @@ class DayRepository(SQLAlchemyRepository):
         )
         return (await self._session.execute(query)).scalar()
 
-    async def get_first_and_last(
-        self, /, **data: str | int | UUID
-    ) -> tuple[DayInDBDTO, DayInDBDTO]:
-        base_query = (
-            select(self.model)
-            .options(
-                selectinload(self.model.day_products).selectinload(
-                    orm.DayProduct.product
-                )
-            )
-            .filter_by(**data)
+    async def get_user_date_range(self, user_id: UUID) -> DateRangeDTO:
+        query = select(
+            func.min(self.model.created_at).label("start_date"),
+            func.max(self.model.created_at).label("end_date"),
+        ).where(
+            self.model.user_id == user_id
         )
 
-        first_stmt = base_query.order_by(self.model.created_at.asc()).limit(1)
-        first_res = await self._session.execute(first_stmt)
-        first = first_res.scalar_one()
+        result = (await self._session.execute(query)).one()
 
-        last_stmt = base_query.order_by(self.model.created_at.desc()).limit(1)
-        last_res = await self._session.execute(last_stmt)
-        last = last_res.scalar_one()
+        if result.start_date is None:
+            raise NoResultFound
 
-        return (
-            DayInDBDTO.model_validate(first),
-            DayInDBDTO.model_validate(last),
+        return DateRangeDTO(
+            start_date=result.start_date.date(),
+            end_date=result.end_date.date(),
         )
 
     async def get_weight_trend(
