@@ -26,6 +26,10 @@ class CalorieSetting(Base):
     ai_creates_products: Mapped[bool] = mapped_column(
         nullable=False, default=True, server_default=text("true")
     )
+    goal_calories_per_day: Mapped[int | None]
+    goal_proteins_per_day: Mapped[int | None]
+    goal_fats_per_day: Mapped[int | None]
+    goal_carbs_per_day: Mapped[int | None]
     created_at: Mapped[created_at]
     updated_at: Mapped[updated_at]
 
