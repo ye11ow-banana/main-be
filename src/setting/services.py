@@ -19,9 +19,7 @@ class SettingService:
 
     async def get_all_user_settings(self, user: UserInfoDTO) -> AllSettingsResponseDTO:
         async with self._uow:
-            calorie_setting = await self._uow.calorie_setting.get(
-                ("add_day_notes", "ai_creates_products"), user_id=user.id
-            )
+            calorie_setting = await self._uow.calorie_setting.get(user_id=user.id)
             return AllSettingsResponseDTO(calorie_setting=calorie_setting)
 
     async def update_user_settings(

@@ -6,6 +6,10 @@ class CalorieSettingDTO(BaseModel):
 
     add_day_notes: bool
     ai_creates_products: bool
+    goal_calories_per_day: int | None = None
+    goal_proteins_per_day: int | None = None
+    goal_fats_per_day: int | None = None
+    goal_carbs_per_day: int | None = None
 
 
 class AllSettingsResponseDTO(BaseModel):
@@ -15,6 +19,10 @@ class AllSettingsResponseDTO(BaseModel):
 class UpdateCalorieSettingDTO(BaseModel):
     add_day_notes: bool | None = None
     ai_creates_products: bool | None = None
+    goal_calories_per_day: int | None = None
+    goal_proteins_per_day: int | None = None
+    goal_fats_per_day: int | None = None
+    goal_carbs_per_day: int | None = None
 
 
 class UpdateSettingsRequestDTO(BaseModel):
