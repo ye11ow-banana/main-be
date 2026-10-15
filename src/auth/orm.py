@@ -11,6 +11,7 @@ if TYPE_CHECKING:
     from calorie.orm import Day
     from notification.orm import VerificationCode
     from setting.orm import CalorieSetting
+    from social.orm import Team
 
 
 class User(Base):
@@ -23,6 +24,20 @@ class User(Base):
     is_verified: Mapped[bool] = mapped_column(default=False, nullable=False)
     avatar_url: Mapped[str | None] = mapped_column(nullable=True)
     created_at: Mapped[created_at]
+
+    sent_team_requests: Mapped[list["Team"]] = relationship(
+        "Team",
+        foreign_keys="Team.requester_id",
+        back_populates="requester",
+        cascade="all, delete-orphan",
+    )
+
+    received_team_requests: Mapped[list["Team"]] = relationship(
+        "Team",
+        foreign_keys="Team.addressee_id",
+        back_populates="addressee",
+        cascade="all, delete-orphan",
+    )
 
     verification_code: Mapped["VerificationCode"] = relationship(
         "VerificationCode", back_populates="user"

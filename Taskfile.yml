@@ -53,3 +53,8 @@ tasks:
     desc: Stop and remove containers
     cmds:
       - docker compose -f deploy/compose.dev.yml down
+
+  logs:
+    desc: Follow Docker logs (pass service name and extra flags)
+    cmds:
+      - docker compose -f deploy/compose.dev.yml logs -f {{.CLI_ARGS}}
